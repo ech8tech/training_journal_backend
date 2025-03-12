@@ -1,6 +1,7 @@
 import { DataSource } from "typeorm";
 
 import { AuthModule } from "@auth/auth.module";
+import { CacheModule } from "@nestjs/cache-manager";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -23,6 +24,10 @@ import { AppService } from "./app.service";
       synchronize: true,
       autoLoadEntities: true,
       // dropSchema: true,
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 30000,
     }),
     ConfigModule.forRoot({
       isGlobal: true,

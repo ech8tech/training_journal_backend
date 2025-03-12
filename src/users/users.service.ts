@@ -1,7 +1,9 @@
 import { hash } from "bcryptjs";
+import { Cache } from "cache-manager";
 import { Repository } from "typeorm";
 
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -12,6 +14,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   findAll() {
@@ -37,5 +40,6 @@ export class UsersService {
 
   async update(user: Partial<User>) {
     await this.usersRepository.update({ id: user.id }, user);
+    await this.cacheManager.del("getUsers");
   }
 }
