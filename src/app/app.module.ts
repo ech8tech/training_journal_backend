@@ -27,7 +27,7 @@ import { AppService } from "./app.service";
     }),
     CacheModule.register({
       isGlobal: true,
-      ttl: 30000,
+      ttl: 0,
     }),
     ConfigModule.forRoot({
       isGlobal: true,

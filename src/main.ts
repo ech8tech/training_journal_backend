@@ -1,5 +1,4 @@
 import * as cookieParser from "cookie-parser";
-import { HttpExceptionFilter } from "src/utils/exceptions";
 
 import { AppModule } from "@app/app.module";
 import { ValidationPipe } from "@nestjs/common";
@@ -12,7 +11,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.use(cookieParser());
   app.setGlobalPrefix("api");
-  app.useGlobalFilters(new HttpExceptionFilter());
+  // app.useGlobalFilters(new HttpExceptionFilter());
   app.enableCors({
     origin: ["http://localhost:9000"],
     methods: ["GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS"],

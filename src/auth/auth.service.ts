@@ -17,7 +17,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async login(user: User, response: Response) {
+  async login(user: User, response: Response, redirect = false) {
     const expiresAccessToken = new Date();
     expiresAccessToken.setMilliseconds(
       expiresAccessToken.getTime() +
@@ -66,6 +66,12 @@ export class AuthService {
       ...user,
       refreshToken: await hash(refreshToken, 10),
     });
+
+    if (user.hasProfile) {
+      response.redirect(this.configService.getOrThrow("REDIRECT_REG_PROFILE"));
+    } else {
+      response.redirect(this.configService.getOrThrow("REDIRECT_DASHBOARD"));
+    }
   }
 
   async verifyUser(email: string, password: string) {

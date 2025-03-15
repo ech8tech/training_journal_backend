@@ -1,14 +1,12 @@
-import { IsEmail, IsPhoneNumber } from "class-validator";
+import { IsEmail } from "class-validator";
 
 export class CreateUserDto {
-  @IsPhoneNumber()
-  tel: string;
-
   @IsEmail()
   email: string;
 
-  // @IsStrongPassword()
   password: string;
 
-  refreshToken: string;
+  hasProfile: boolean;
+
+  provider?: "google";
 }

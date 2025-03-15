@@ -42,4 +42,16 @@ export class UsersService {
     await this.usersRepository.update({ id: user.id }, user);
     await this.cacheManager.del("getUsers");
   }
+
+  async getOrCreateUser(createUserDto: CreateUserDto) {
+    const user = await this.usersRepository.findOne({
+      where: { email: createUserDto.email },
+    });
+
+    if (user) {
+      return user;
+    }
+
+    return this.create(createUserDto);
+  }
 }

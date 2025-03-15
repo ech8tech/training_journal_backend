@@ -1,6 +1,5 @@
-import { CurrentUser } from "@auth/decorators";
-import { JwtAuthGuard } from "@auth/guards/jwt-auth.guard";
-import { CacheInterceptor, CacheKey } from "@nestjs/cache-manager";
+import { JwtAuthGuard } from "@auth/guards";
+import { CacheInterceptor } from "@nestjs/cache-manager";
 import {
   Body,
   Controller,
@@ -12,7 +11,6 @@ import {
 } from "@nestjs/common";
 
 import { CreateUserDto } from "./dto/create-user.dto";
-import { User } from "./user.entity";
 import { UsersService } from "./users.service";
 
 @Controller("users")
@@ -20,9 +18,9 @@ import { UsersService } from "./users.service";
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post("create")
-  createUser(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  @Post()
+  async create(@Body() createUserDto: CreateUserDto) {
+    await this.usersService.create({ ...createUserDto, hasProfile: false });
   }
 
   @Put("update")
@@ -30,10 +28,9 @@ export class UsersController {
     return this.usersService.update(createUserDto);
   }
 
-  @CacheKey("getUsers")
-  @Get()
   @UseGuards(JwtAuthGuard)
-  getUsers(@CurrentUser() user: User) {
+  @Get()
+  getUsers() {
     return this.usersService.findAll();
   }
 }
