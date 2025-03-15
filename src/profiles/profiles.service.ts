@@ -18,6 +18,6 @@ export class ProfilesService {
   async createProfile(profile: CreateProfileDto, userId: string) {
     const savedProfile = await this.profilesRepository.save(profile);
 
-    await this.usersService.connectWithProfile(savedProfile, userId);
+    await this.usersService.addProfile(savedProfile, userId);
   }
 }

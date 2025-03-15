@@ -6,7 +6,6 @@ import {
   Delete,
   Get,
   Param,
-  Post,
   Put,
   UseGuards,
   UseInterceptors,
@@ -19,11 +18,6 @@ import { UsersService } from "./users.service";
 @UseInterceptors(CacheInterceptor)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Post("create")
-  async createUser(@Body() createUserDto: CreateUserDto) {
-    await this.usersService.createUser({ ...createUserDto, hasProfile: false });
-  }
 
   @Put("update")
   updateUser(@Body() createUserDto: CreateUserDto) {

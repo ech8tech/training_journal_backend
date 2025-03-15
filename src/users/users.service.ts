@@ -47,12 +47,14 @@ export class UsersService {
     await this.usersRepository.delete(userId);
   }
 
-  async connectWithProfile(savedProfile: Profile, userId: string) {
+  async addProfile(savedProfile: Profile, userId: string) {
     await this.usersRepository
       .createQueryBuilder()
       .relation(User, "profile")
       .of(userId)
       .set(savedProfile.id);
+
+    await this.updateUser({ id: userId, hasProfile: true });
   }
 
   async getOrCreateUser(createUserDto: CreateUserDto) {
