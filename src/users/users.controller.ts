@@ -3,7 +3,9 @@ import { CacheInterceptor } from "@nestjs/cache-manager";
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
   UseGuards,
@@ -18,14 +20,19 @@ import { UsersService } from "./users.service";
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  async create(@Body() createUserDto: CreateUserDto) {
-    await this.usersService.create({ ...createUserDto, hasProfile: false });
+  @Post("create")
+  async createUser(@Body() createUserDto: CreateUserDto) {
+    await this.usersService.createUser({ ...createUserDto, hasProfile: false });
   }
 
   @Put("update")
   updateUser(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.update(createUserDto);
+    return this.usersService.updateUser(createUserDto);
+  }
+
+  @Delete("delete/:id")
+  deleteUser(@Param("id") id: string) {
+    return this.usersService.deleteUser(id);
   }
 
   @UseGuards(JwtAuthGuard)

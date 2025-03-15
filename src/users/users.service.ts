@@ -1,5 +1,6 @@
 import { hash } from "bcryptjs";
 import { Cache } from "cache-manager";
+import { Profile } from "src/profiles/profile.entity";
 import { Repository } from "typeorm";
 
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
@@ -31,16 +32,27 @@ export class UsersService {
     return foundUser;
   }
 
-  async create(createUserDto: CreateUserDto) {
+  async createUser(createUserDto: CreateUserDto) {
     return this.usersRepository.save({
       ...createUserDto,
       password: await hash(createUserDto.password, 10),
     });
   }
 
-  async update(user: Partial<User>) {
+  async updateUser(user: Partial<User>) {
     await this.usersRepository.update({ id: user.id }, user);
-    await this.cacheManager.del("getUsers");
+  }
+
+  async deleteUser(userId: string) {
+    await this.usersRepository.delete(userId);
+  }
+
+  async connectWithProfile(savedProfile: Profile, userId: string) {
+    await this.usersRepository
+      .createQueryBuilder()
+      .relation(User, "profile")
+      .of(userId)
+      .set(savedProfile.id);
   }
 
   async getOrCreateUser(createUserDto: CreateUserDto) {
@@ -52,6 +64,6 @@ export class UsersService {
       return user;
     }
 
-    return this.create(createUserDto);
+    return this.createUser(createUserDto);
   }
 }

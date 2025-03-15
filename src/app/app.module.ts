@@ -1,3 +1,4 @@
+import { ProfilesModule } from "src/profiles/profiles.module";
 import { DataSource } from "typeorm";
 
 import { AuthModule } from "@auth/auth.module";
@@ -23,7 +24,7 @@ import { AppService } from "./app.service";
       database: "training_journal",
       synchronize: true,
       autoLoadEntities: true,
-      // dropSchema: true,
+      dropSchema: true,
     }),
     CacheModule.register({
       isGlobal: true,
@@ -34,6 +35,7 @@ import { AppService } from "./app.service";
     }),
     UsersModule,
     AuthModule,
+    ProfilesModule,
   ],
 })
 export class AppModule {

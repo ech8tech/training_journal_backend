@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Profile } from "src/profiles/profile.entity";
+import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity("Users")
 export class User {
@@ -19,4 +20,7 @@ export class User {
 
   @Column({ length: 100, nullable: true })
   refreshToken: string;
+
+  @OneToOne(() => Profile, (profile) => profile.user)
+  profile: Profile;
 }

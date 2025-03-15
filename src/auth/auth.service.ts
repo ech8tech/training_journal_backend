@@ -62,7 +62,7 @@ export class AuthService {
       expires: expiresRefreshToken,
     });
 
-    await this.usersService.update({
+    await this.usersService.updateUser({
       ...user,
       refreshToken: await hash(refreshToken, 10),
     });
