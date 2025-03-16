@@ -8,31 +8,33 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 
-export class BusinessException extends HttpException {
-  constructor(
-    public readonly errorId: string,
-    public readonly message: string,
-    status: HttpStatus = HttpStatus.BAD_REQUEST,
-  ) {
-    super({ errorId, message }, status);
-  }
-}
+type ResponseError = {
+  errorMessage: string;
+  errorId: string;
+};
 
 @Catch()
-export class HttpExceptionFilter implements ExceptionFilter {
-  catch(exception: HttpException, host: ArgumentsHost) {
+export class GlobalExceptionFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const status = exception?.getStatus();
-    const exceptionResponse = exception?.getResponse() as {
-      errorId: string;
-      message: string;
+
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let error: ResponseError = {
+      errorMessage: "Internal server error",
+      errorId: "internal_server_error",
     };
 
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      error = exception.getResponse() as ResponseError;
+    }
+
     response.status(status).json({
-      statusCode: status,
-      errorId: exceptionResponse.errorId,
-      message: exceptionResponse.message,
+      error: {
+        ...error,
+        statusCode: status,
+      },
     });
   }
 }

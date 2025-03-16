@@ -24,7 +24,7 @@ import { AppService } from "./app.service";
       database: "training_journal",
       synchronize: true,
       autoLoadEntities: true,
-      dropSchema: true,
+      // dropSchema: true,
     }),
     CacheModule.register({
       isGlobal: true,

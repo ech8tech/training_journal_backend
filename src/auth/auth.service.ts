@@ -17,7 +17,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async login(user: User, response: Response) {
+  async login(user: User, response: Response, redirect: boolean = false) {
     const expiresAccessToken = new Date();
     expiresAccessToken.setMilliseconds(
       expiresAccessToken.getTime() +
@@ -67,11 +67,17 @@ export class AuthService {
       refreshToken: await hash(refreshToken, 10),
     });
 
-    if (user.hasProfile) {
-      response.redirect(this.configService.getOrThrow("REDIRECT_REG_PROFILE"));
-    } else {
-      response.redirect(this.configService.getOrThrow("REDIRECT_DASHBOARD"));
+    if (redirect) {
+      if (user.hasProfile) {
+        response.redirect(this.configService.getOrThrow("REDIRECT_DASHBOARD"));
+      } else {
+        response.redirect(
+          this.configService.getOrThrow("REDIRECT_REG_PROFILE"),
+        );
+      }
     }
+
+    return user;
   }
 
   async verifyUser(email: string, password: string) {

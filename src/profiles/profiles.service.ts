@@ -1,7 +1,7 @@
 import { CreateProfileDto } from "src/profiles/dto/create-profile";
 import { Repository } from "typeorm";
 
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UsersService } from "@users/users.service";
 
@@ -16,8 +16,17 @@ export class ProfilesService {
   ) {}
 
   async createProfile(profile: CreateProfileDto, userId: string) {
+    const userWithProfile = await this.usersService.find(
+      { id: userId },
+      { relations: ["profile"] },
+    );
+
+    if (userWithProfile.profile) {
+      throw new BadRequestException("Profile already exists");
+    }
+
     const savedProfile = await this.profilesRepository.save(profile);
 
-    await this.usersService.addProfile(savedProfile, userId);
+    return await this.usersService.addProfile(savedProfile, userId);
   }
 }

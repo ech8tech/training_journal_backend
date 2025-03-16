@@ -27,7 +27,9 @@ export class AuthController {
       hasProfile: false,
     });
 
-    await this.authService.login(createdUser, response);
+    const signedUpUser = await this.authService.login(createdUser, response);
+
+    return { id: signedUpUser.id, hasProfile: signedUpUser.hasProfile };
   }
 
   @Post("sign_in")
@@ -36,7 +38,8 @@ export class AuthController {
     @CurrentUser() user: User,
     @Res({ passthrough: true }) response: Response,
   ) {
-    await this.authService.login(user, response);
+    const signedInUser = await this.authService.login(user, response);
+    return { id: signedInUser.id, hasProfile: signedInUser.hasProfile };
   }
 
   @Post("refresh")
@@ -58,6 +61,6 @@ export class AuthController {
     @CurrentUser() user: User,
     @Res({ passthrough: true }) response: Response,
   ) {
-    await this.authService.login(user, response);
+    await this.authService.login(user, response, true);
   }
 }

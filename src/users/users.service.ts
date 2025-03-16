@@ -1,7 +1,7 @@
 import { hash } from "bcryptjs";
 import { Cache } from "cache-manager";
 import { Profile } from "src/profiles/profile.entity";
-import { Repository } from "typeorm";
+import { FindOneOptions, Repository } from "typeorm";
 
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
@@ -22,8 +22,11 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
-  async find(user: Partial<User>) {
-    const foundUser = await this.usersRepository.findOne({ where: user });
+  async find(user: Partial<User>, options?: FindOneOptions<User>) {
+    const foundUser = await this.usersRepository.findOne({
+      where: user,
+      ...options,
+    });
 
     if (!foundUser) {
       throw new NotFoundException("User does not exist");
