@@ -4,7 +4,7 @@ import { Response } from "express";
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
-import { User } from "@users/user.entity";
+import { User } from "@users/entities/user.entity";
 import { UsersService } from "@users/users.service";
 
 import { TokenPayload } from "./interfaces";

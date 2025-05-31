@@ -1,11 +1,11 @@
-import { CreateProfileDto } from "src/profiles/dto/create-profile";
 import { Repository } from "typeorm";
 
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UsersService } from "@users/users.service";
 
-import { Profile } from "./profile.entity";
+import { CreateProfileDto } from "./dto/create-profile";
+import { Profile } from "./entities/profile.entity";
 
 @Injectable()
 export class ProfilesService {

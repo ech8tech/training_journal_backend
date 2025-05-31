@@ -1,21 +1,19 @@
 import { hash } from "bcryptjs";
-import { Cache } from "cache-manager";
-import { Profile } from "src/profiles/profile.entity";
 import { FindOneOptions, Repository } from "typeorm";
 
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { Profile } from "@profiles/entities/profile.entity";
 
 import { CreateUserDto } from "./dto/create-user.dto";
-import { User } from "./user.entity";
+import { User } from "./entities/user.entity";
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    // @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   findAll() {

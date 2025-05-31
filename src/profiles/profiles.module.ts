@@ -1,9 +1,8 @@
-import { Profile } from "src/profiles/profile.entity";
-
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { UsersModule } from "@users/users.module";
 
+import { Profile } from "./entities/profile.entity";
 import { ProfilesController } from "./profiles.controller";
 import { ProfilesService } from "./profiles.service";
 

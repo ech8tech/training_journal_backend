@@ -1,4 +1,7 @@
+import { ExercisesModule } from "src/exercises/exercises.module";
 import { ProfilesModule } from "src/profiles/profiles.module";
+import { SessionsModule } from "src/sessions/sessions.module";
+import { SetsModule } from "src/sets/sets.module";
 import { DataSource } from "typeorm";
 
 import { AuthModule } from "@auth/auth.module";
@@ -7,6 +10,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { UsersModule } from "@users/users.module";
+import { UsersExercisesModule } from "@users-exercises/users-exercises.module";
 
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
@@ -33,9 +37,13 @@ import { AppService } from "./app.service";
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    UsersModule,
     AuthModule,
+    UsersModule,
     ProfilesModule,
+    ExercisesModule,
+    UsersExercisesModule,
+    SessionsModule,
+    SetsModule,
   ],
 })
 export class AppModule {

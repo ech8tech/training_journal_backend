@@ -4,7 +4,7 @@ import { JwtRefreshAuthGuard, LocalAuthGuard } from "@auth/guards";
 import { GoogleAuthGuard } from "@auth/guards/google-auth.guard";
 import { Body, Controller, Get, Post, Res, UseGuards } from "@nestjs/common";
 import { CreateUserDto } from "@users/dto/create-user.dto";
-import { User } from "@users/user.entity";
+import { User } from "@users/entities/user.entity";
 import { UsersService } from "@users/users.service";
 
 import { AuthService } from "./auth.service";
