@@ -1,1 +1,4 @@
-export class CreateUsersExerciseDto {}
+export class CreateUsersExerciseDto {
+  userId: string;
+  exerciseId: string;
+}

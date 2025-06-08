@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { In, IsNull, Repository } from "typeorm";
 
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -14,16 +14,31 @@ export class SetsService {
     private readonly sets: Repository<Set>,
   ) {}
 
-  async create(createSetDto: CreateSetDto) {
-    return await this.sets.save(createSetDto);
+  async addSets(createSetDto: CreateSetDto[]) {
+    try {
+      console.log("createSetDto", createSetDto);
+      return await this.sets.save(createSetDto);
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   async findAll() {
     return await this.sets.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} set`;
+  async findSetsWithoutSessions(userId: string, exerciseId: string) {
+    return await this.sets.find({
+      where: { userId, exerciseId, sessionId: IsNull() },
+    });
+  }
+
+  async findSetsBySessionId(sessionId: string) {
+    return await this.sets.find({ where: { sessionId } });
+  }
+
+  async updateSetsByIds(ids: string[], sessionId: string) {
+    return await this.sets.update({ id: In(ids) }, { sessionId });
   }
 
   update(id: number, updateSetDto: UpdateSetDto) {

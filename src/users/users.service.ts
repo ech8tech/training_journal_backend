@@ -20,14 +20,17 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
-  async find(user: Partial<User>, options?: FindOneOptions<User>) {
+  async find(
+    user: Partial<Pick<User, "id" | "email">>,
+    options?: FindOneOptions<User>,
+  ) {
     const foundUser = await this.usersRepository.findOne({
       where: user,
       ...options,
     });
 
     if (!foundUser) {
-      throw new NotFoundException("User does not exist");
+      throw new NotFoundException("Пользователя не существует");
     }
 
     return foundUser;

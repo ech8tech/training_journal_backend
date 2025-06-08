@@ -7,7 +7,6 @@ import {
 } from "typeorm";
 
 import { Profile } from "@profiles/entities/profile.entity";
-import { Session } from "@sessions/entities/session.entity";
 import { UserExercise } from "@users-exercises/entities/user-exercise.entity";
 
 @Entity("Users")
@@ -34,11 +33,6 @@ export class User {
     cascade: true,
   })
   profile: Profile;
-
-  @OneToMany(() => Session, (session) => session.user, {
-    cascade: true,
-  })
-  sessions: Session[];
 
   @OneToMany(() => UserExercise, (userExercise) => userExercise.user, {
     cascade: true,

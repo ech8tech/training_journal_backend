@@ -1,7 +1,20 @@
+import { CreateSetDto } from "@sets/dto/create-set.dto";
+
 export class CreateExerciseDto {
-  name: string;
+  // @IsString()
+  // @IsNotEmpty()
+  readonly name: string;
 
-  muscleGroup: string;
+  // @IsString()
+  // @IsNotEmpty()
+  readonly muscleGroup: string;
 
-  userId: string;
+  // @IsString()
+  // @IsNotEmpty()
+  readonly userId: string;
+
+  // @IsArray()
+  // @ValidateNested({ each: true })
+  // @Type(() => CreateSetDto)
+  readonly sets: CreateSetDto[];
 }

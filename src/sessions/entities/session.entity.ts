@@ -8,7 +8,7 @@ import {
 } from "typeorm";
 
 import { Set } from "@sets/entities/set.entity";
-import { User } from "@users/entities/user.entity";
+import { UserExercise } from "@users-exercises/entities/user-exercise.entity";
 
 @Entity("Sessions")
 export class Session {
@@ -18,15 +18,24 @@ export class Session {
   @Column("date")
   date: string;
 
-  @ManyToOne(() => User, (user) => user.sessions, {
-    onDelete: "CASCADE",
-  })
-  @JoinColumn()
-  user: User;
+  @Column("uuid")
+  userId: string;
+
+  @Column("uuid")
+  exerciseId: string;
 
   @OneToMany(() => Set, (set) => set.session, {
     cascade: true,
   })
   @JoinColumn()
   sets: Set[];
+
+  @ManyToOne(() => UserExercise, (userExercise) => userExercise.sets, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn([
+    { name: "userId", referencedColumnName: "userId" },
+    { name: "exerciseId", referencedColumnName: "exerciseId" },
+  ])
+  userExercise: UserExercise;
 }

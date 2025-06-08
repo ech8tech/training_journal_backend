@@ -9,5 +9,6 @@ import { UsersExercisesService } from "./users-exercises.service";
   imports: [TypeOrmModule.forFeature([UserExercise])],
   controllers: [UsersExercisesController],
   providers: [UsersExercisesService],
+  exports: [UsersExercisesService],
 })
 export class UsersExercisesModule {}

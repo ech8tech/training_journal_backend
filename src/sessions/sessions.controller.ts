@@ -1,3 +1,5 @@
+import { CurrentUser } from "@auth/decorators";
+import { JwtAuthGuard } from "@auth/guards";
 import {
   Body,
   Controller,
@@ -6,19 +8,38 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from "@nestjs/common";
+import { SetsService } from "@sets/sets.service";
+import { User } from "@users/entities/user.entity";
 
-import { CreateSessionDto } from "./dto/create-session.dto";
+import { CreateSessionDto, DeleteSessionDto } from "./dto/create-session.dto";
 import { UpdateSessionDto } from "./dto/update-session.dto";
 import { SessionsService } from "./sessions.service";
 
 @Controller("sessions")
 export class SessionsController {
-  constructor(private readonly sessionsService: SessionsService) {}
+  constructor(
+    private readonly sessionsService: SessionsService,
+    private readonly setsService: SetsService,
+  ) {}
 
-  @Post()
-  create(@Body() createSessionDto: CreateSessionDto) {
-    return this.sessionsService.create(createSessionDto);
+  @Post("create")
+  @UseGuards(JwtAuthGuard)
+  async create(
+    @CurrentUser() user: User,
+    @Body() createSessionDto: CreateSessionDto,
+  ) {
+    return await this.sessionsService.createSession(user.id, createSessionDto);
+  }
+
+  @Delete("delete")
+  @UseGuards(JwtAuthGuard)
+  async delete(
+    @CurrentUser() user: User,
+    @Body() deleteSessionDto: DeleteSessionDto,
+  ) {
+    return await this.sessionsService.deleteSession(user.id, deleteSessionDto);
   }
 
   @Get()
@@ -28,16 +49,11 @@ export class SessionsController {
 
   @Get(":id")
   findOne(@Param("id") id: string) {
-    return this.sessionsService.findOne(+id);
+    // return this.sessionsService.findOne(+id);
   }
 
   @Patch(":id")
   update(@Param("id") id: string, @Body() updateSessionDto: UpdateSessionDto) {
     return this.sessionsService.update(+id, updateSessionDto);
-  }
-
-  @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.sessionsService.remove(+id);
   }
 }

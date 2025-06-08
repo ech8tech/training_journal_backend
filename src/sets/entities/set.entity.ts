@@ -6,25 +6,13 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 
-import { Exercise } from "@exercises/entities/exercise.entity";
 import { Session } from "@sessions/entities/session.entity";
+import { UserExercise } from "@users-exercises/entities/user-exercise.entity";
 
 @Entity("Sets")
 export class Set {
   @PrimaryGeneratedColumn("uuid")
   id: string;
-
-  @ManyToOne(() => Session, (session) => session.sets, {
-    onDelete: "CASCADE",
-  })
-  @JoinColumn()
-  session: Session;
-
-  @ManyToOne(() => Exercise, (exercise) => exercise.sets, {
-    onDelete: "CASCADE",
-  })
-  @JoinColumn()
-  exercise: Exercise;
 
   @Column("integer")
   order: number;
@@ -34,4 +22,28 @@ export class Set {
 
   @Column("decimal")
   weight: number;
+
+  @Column("uuid", { nullable: true })
+  sessionId: string | null;
+
+  @Column("uuid")
+  userId: string;
+
+  @Column("uuid")
+  exerciseId: string;
+
+  @ManyToOne(() => Session, (session) => session.sets, {
+    onDelete: "SET NULL",
+  })
+  @JoinColumn({ name: "sessionId" })
+  session: Session | null;
+
+  @ManyToOne(() => UserExercise, (userExercise) => userExercise.sets, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn([
+    { name: "userId", referencedColumnName: "userId" },
+    { name: "exerciseId", referencedColumnName: "exerciseId" },
+  ])
+  userExercise: UserExercise;
 }

@@ -9,5 +9,6 @@ import { SetsService } from "./sets.service";
   imports: [TypeOrmModule.forFeature([Set])],
   controllers: [SetsController],
   providers: [SetsService],
+  exports: [SetsService],
 })
 export class SetsModule {}

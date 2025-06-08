@@ -1,3 +1,5 @@
+import { CurrentUser } from "@auth/decorators";
+import { JwtAuthGuard } from "@auth/guards";
 import {
   Body,
   Controller,
@@ -6,7 +8,9 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from "@nestjs/common";
+import { User } from "@users/entities/user.entity";
 
 import { CreateExerciseDto } from "./dto/create-exercise.dto";
 import { UpdateExerciseDto } from "./dto/update-exercise.dto";
@@ -16,19 +20,21 @@ import { ExercisesService } from "./exercises.service";
 export class ExercisesController {
   constructor(private readonly exercisesService: ExercisesService) {}
 
-  @Post()
-  create(@Body() createExerciseDto: CreateExerciseDto) {
-    return this.exercisesService.create(createExerciseDto);
+  @Post("create")
+  @UseGuards(JwtAuthGuard)
+  create(
+    @CurrentUser() user: User,
+    @Body() createExerciseDto: CreateExerciseDto,
+  ) {
+    return this.exercisesService.create({
+      ...createExerciseDto,
+      userId: user?.id,
+    });
   }
 
   @Get()
   findAll() {
     return this.exercisesService.findAll();
-  }
-
-  @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.exercisesService.findOne(id);
   }
 
   @Patch(":id")
@@ -42,5 +48,10 @@ export class ExercisesController {
   @Delete(":id")
   remove(@Param("id") id: string) {
     return this.exercisesService.remove(id);
+  }
+
+  @Delete()
+  removeAll() {
+    return this.exercisesService.removeAll();
   }
 }

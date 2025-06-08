@@ -15,6 +15,10 @@ export class ProfilesService {
     private readonly usersService: UsersService,
   ) {}
 
+  async getProfiles() {
+    return await this.profilesRepository.find();
+  }
+
   async createProfile(profile: CreateProfileDto, userId: string) {
     const userWithProfile = await this.usersService.find(
       { id: userId },
