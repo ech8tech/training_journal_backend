@@ -1,6 +1,6 @@
 import { Repository } from "typeorm";
 
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserExercise } from "@users-exercises/entities/user-exercise.entity";
 
@@ -25,7 +25,16 @@ export class UsersExercisesService {
     return this.usersExerciseRepository.findBy({ userId });
   }
 
-  remove(id: number) {
-    return this.usersExerciseRepository.delete(id);
+  async removeUserExercise(userId: string, exerciseId: string) {
+    const userExercise = await this.usersExerciseRepository.findOneBy({
+      userId,
+      exerciseId,
+    });
+
+    if (!userExercise) {
+      throw new NotFoundException("Ошибка удаления упражнения");
+    }
+
+    return await this.usersExerciseRepository.remove(userExercise);
   }
 }

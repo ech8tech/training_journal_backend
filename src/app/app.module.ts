@@ -12,11 +12,9 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { UsersModule } from "@users/users.module";
 import { UsersExercisesModule } from "@users-exercises/users-exercises.module";
 
-import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 
 @Module({
-  controllers: [AppController],
   providers: [AppService],
   imports: [
     TypeOrmModule.forRoot({

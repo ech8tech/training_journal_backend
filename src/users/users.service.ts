@@ -3,7 +3,6 @@ import { FindOneOptions, Repository } from "typeorm";
 
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Profile } from "@profiles/entities/profile.entity";
 
 import { CreateUserDto } from "./dto/create-user.dto";
 import { User } from "./entities/user.entity";
@@ -49,16 +48,6 @@ export class UsersService {
 
   async deleteUser(userId: string) {
     await this.usersRepository.delete(userId);
-  }
-
-  async addProfile(savedProfile: Profile, userId: string) {
-    await this.usersRepository
-      .createQueryBuilder()
-      .relation(User, "profile")
-      .of(userId)
-      .set(savedProfile.id);
-
-    await this.updateUser({ id: userId, hasProfile: true });
   }
 
   async getOrCreateUser(createUserDto: CreateUserDto) {

@@ -6,7 +6,5 @@ export class CreateUserDto {
 
   password: string;
 
-  hasProfile: boolean;
-
   provider?: "google";
 }

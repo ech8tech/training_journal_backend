@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { SessionsModule } from "@sessions/sessions.module";
 import { SetsModule } from "@sets/sets.module";
 import { UsersModule } from "@users/users.module";
 import { UsersExercisesModule } from "@users-exercises/users-exercises.module";
@@ -14,6 +15,7 @@ import { ExercisesService } from "./exercises.service";
     UsersExercisesModule,
     SetsModule,
     UsersModule,
+    SessionsModule,
   ],
   controllers: [ExercisesController],
   providers: [ExercisesService],

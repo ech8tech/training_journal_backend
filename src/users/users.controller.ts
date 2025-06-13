@@ -1,3 +1,4 @@
+import { JwtAuthGuard } from "@auth/guards";
 import { CacheInterceptor } from "@nestjs/cache-manager";
 import {
   Body,
@@ -6,6 +7,7 @@ import {
   Get,
   Param,
   Put,
+  UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
 
@@ -27,7 +29,7 @@ export class UsersController {
     return this.usersService.deleteUser(id);
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get()
   getUsers() {
     return this.usersService.findAll();

@@ -23,9 +23,6 @@ export class User {
   @Column({ length: 20, nullable: true })
   provider: string;
 
-  @Column()
-  hasProfile: boolean;
-
   @Column({ length: 100, nullable: true })
   refreshToken: string;
 

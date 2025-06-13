@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { User } from "@users/entities/user.entity";
+import { UsersExercisesService } from "@users-exercises/users-exercises.service";
 
 import { CreateExerciseDto } from "./dto/create-exercise.dto";
 import { UpdateExerciseDto } from "./dto/update-exercise.dto";
@@ -18,7 +19,10 @@ import { ExercisesService } from "./exercises.service";
 
 @Controller("exercises")
 export class ExercisesController {
-  constructor(private readonly exercisesService: ExercisesService) {}
+  constructor(
+    private readonly exercisesService: ExercisesService,
+    private readonly usersExerciseService: UsersExercisesService,
+  ) {}
 
   @Post("create")
   @UseGuards(JwtAuthGuard)
@@ -26,23 +30,35 @@ export class ExercisesController {
     @CurrentUser() user: User,
     @Body() createExerciseDto: CreateExerciseDto,
   ) {
-    return this.exercisesService.create({
+    return this.exercisesService.createExercise({
       ...createExerciseDto,
       userId: user?.id,
     });
   }
 
+  @Patch("edit/:exerciseId")
+  @UseGuards(JwtAuthGuard)
+  update(
+    @CurrentUser() user: User,
+    @Param("exerciseId") exerciseId: string,
+    @Body() updateExerciseDto: UpdateExerciseDto,
+  ) {
+    return this.exercisesService.editExercise(
+      user.id,
+      exerciseId,
+      updateExerciseDto,
+    );
+  }
+
+  @Delete("delete/:exerciseId")
+  @UseGuards(JwtAuthGuard)
+  delete(@CurrentUser() user: User, @Param("exerciseId") exerciseId: string) {
+    return this.usersExerciseService.removeUserExercise(user.id, exerciseId);
+  }
+
   @Get()
   findAll() {
     return this.exercisesService.findAll();
-  }
-
-  @Patch(":id")
-  update(
-    @Param("id") id: string,
-    @Body() updateExerciseDto: UpdateExerciseDto,
-  ) {
-    return this.exercisesService.update(id, updateExerciseDto);
   }
 
   @Delete(":id")

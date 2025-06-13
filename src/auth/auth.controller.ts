@@ -3,6 +3,7 @@ import { Response } from "express";
 import { JwtRefreshAuthGuard, LocalAuthGuard } from "@auth/guards";
 import { GoogleAuthGuard } from "@auth/guards/google-auth.guard";
 import { Body, Controller, Get, Post, Res, UseGuards } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { CreateUserDto } from "@users/dto/create-user.dto";
 import { User } from "@users/entities/user.entity";
 import { UsersService } from "@users/users.service";
@@ -15,6 +16,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Post("sign_up")
@@ -22,14 +24,11 @@ export class AuthController {
     @Body() createUserDto: CreateUserDto,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const createdUser = await this.usersService.createUser({
-      ...createUserDto,
-      hasProfile: false,
-    });
+    const createdUser = await this.usersService.createUser(createUserDto);
 
     const signedUpUser = await this.authService.login(createdUser, response);
 
-    return { id: signedUpUser.id, hasProfile: signedUpUser.hasProfile };
+    return { id: signedUpUser.id };
   }
 
   @Post("sign_in")
@@ -48,7 +47,8 @@ export class AuthController {
     @CurrentUser() user: User,
     @Res({ passthrough: true }) response: Response,
   ) {
-    await this.authService.login(user, response);
+    const signedInUser = await this.authService.login(user, response);
+    return { accessToken: signedInUser.accessToken };
   }
 
   @Get("google")
@@ -61,6 +61,12 @@ export class AuthController {
     @CurrentUser() user: User,
     @Res({ passthrough: true }) response: Response,
   ) {
-    await this.authService.login(user, response, true);
+    const signedInUser = await this.authService.login(user, response);
+
+    if (signedInUser.hasProfile) {
+      response.redirect(this.configService.getOrThrow("REDIRECT_TO_DASHBOARD"));
+    } else {
+      response.redirect(this.configService.getOrThrow("REDIRECT_TO_PROFILE"));
+    }
   }
 }

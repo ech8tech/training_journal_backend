@@ -11,8 +11,16 @@ export class ProfilesController {
   constructor(private readonly profileService: ProfilesService) {}
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   async getProfiles() {
     return await this.profileService.getProfiles();
+  }
+
+  @Get("check")
+  @UseGuards(JwtAuthGuard)
+  async getUserProfile(@CurrentUser() user: User) {
+    const profileFound = await this.profileService.getUserProfile(user.id);
+    return { id: profileFound?.id };
   }
 
   @Post("create")

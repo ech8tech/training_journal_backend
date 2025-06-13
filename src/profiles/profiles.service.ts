@@ -1,8 +1,11 @@
 import { Repository } from "typeorm";
 
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { UsersService } from "@users/users.service";
 
 import { CreateProfileDto } from "./dto/create-profile";
 import { Profile } from "./entities/profile.entity";
@@ -12,25 +15,27 @@ export class ProfilesService {
   constructor(
     @InjectRepository(Profile)
     private readonly profilesRepository: Repository<Profile>,
-    private readonly usersService: UsersService,
   ) {}
 
   async getProfiles() {
     return await this.profilesRepository.find();
   }
 
-  async createProfile(profile: CreateProfileDto, userId: string) {
-    const userWithProfile = await this.usersService.find(
-      { id: userId },
-      { relations: ["profile"] },
-    );
+  async getUserProfile(userId: string) {
+    return await this.profilesRepository.findOneBy({ userId });
+  }
 
-    if (userWithProfile.profile) {
+  async createProfile(profile: CreateProfileDto, userId: string) {
+    const userProfile = await this.getUserProfile(userId);
+
+    if (userProfile) {
       throw new BadRequestException("Profile already exists");
     }
 
-    const savedProfile = await this.profilesRepository.save(profile);
-
-    return await this.usersService.addProfile(savedProfile, userId);
+    try {
+      return await this.profilesRepository.save({ ...profile, userId });
+    } catch (error) {
+      throw new InternalServerErrorException("Ошибка создания профиля");
+    }
   }
 }

@@ -1,9 +1,14 @@
 import { compare, hash } from "bcryptjs";
 import { Response } from "express";
 
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
+import { ProfilesService } from "@profiles/profiles.service";
 import { User } from "@users/entities/user.entity";
 import { UsersService } from "@users/users.service";
 
@@ -15,9 +20,10 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly profilesService: ProfilesService,
   ) {}
 
-  async login(user: User, response: Response, redirect: boolean = false) {
+  async login(user: User, response: Response) {
     const expiresAccessToken = new Date();
     expiresAccessToken.setMilliseconds(
       expiresAccessToken.getTime() +
@@ -52,7 +58,6 @@ export class AuthService {
     });
 
     response.cookie("Authentication", accessToken, {
-      httpOnly: true,
       secure: this.configService.get("NODE_ENV") === "production",
       expires: expiresAccessToken,
     });
@@ -62,22 +67,18 @@ export class AuthService {
       expires: expiresRefreshToken,
     });
 
-    await this.usersService.updateUser({
-      ...user,
-      refreshToken: await hash(refreshToken, 10),
-    });
-
-    if (redirect) {
-      if (user.hasProfile) {
-        response.redirect(this.configService.getOrThrow("REDIRECT_DASHBOARD"));
-      } else {
-        response.redirect(
-          this.configService.getOrThrow("REDIRECT_REG_PROFILE"),
-        );
-      }
+    try {
+      await this.usersService.updateUser({
+        ...user,
+        refreshToken: await hash(refreshToken, 10),
+      });
+    } catch (e) {
+      throw new BadRequestException("Не удалось обновить Refresh Token");
     }
 
-    return user;
+    const userProfile = await this.profilesService.getUserProfile(user.id);
+
+    return { ...user, accessToken, hasProfile: !!userProfile?.id };
   }
 
   async verifyUser(email: string, password: string) {

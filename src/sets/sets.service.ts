@@ -15,8 +15,8 @@ export class SetsService {
   ) {}
 
   async addSets(createSetDto: CreateSetDto[]) {
+    console.log(createSetDto);
     try {
-      console.log("createSetDto", createSetDto);
       return await this.sets.save(createSetDto);
     } catch (e) {
       console.log(e);
@@ -37,7 +37,7 @@ export class SetsService {
     return await this.sets.find({ where: { sessionId } });
   }
 
-  async updateSetsByIds(ids: string[], sessionId: string) {
+  async updateSetsSessions(ids: string[], sessionId: string) {
     return await this.sets.update({ id: In(ids) }, { sessionId });
   }
 

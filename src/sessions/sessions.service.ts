@@ -45,7 +45,7 @@ export class SessionsService {
       const setsIds = setsFounded.map((set) => set.id);
 
       if (setsFounded?.length) {
-        return await this.setsService.updateSetsByIds(
+        return await this.setsService.updateSetsSessions(
           setsIds,
           sessionCreated.id,
         );

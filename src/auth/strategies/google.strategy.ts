@@ -1,7 +1,7 @@
 import { Profile } from "passport";
 import { Strategy } from "passport-google-oauth2";
 
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
 import { UsersService } from "@users/users.service";
@@ -28,14 +28,13 @@ export class GoogleStrategy extends PassportStrategy(Strategy, "google") {
     const email = profile?.emails?.[0]?.value;
 
     if (!email) {
-      throw new UnauthorizedException();
+      throw new NotFoundException("Пользователь не найден");
     }
 
     return this.usersService.getOrCreateUser({
       email,
       password: "",
       provider: "google",
-      hasProfile: false, // при регистрации
     });
   }
 }

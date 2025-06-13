@@ -3,6 +3,7 @@ import { Repository } from "typeorm";
 import { Exercise } from "@exercises/entities/exercise.entity";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
+import { SessionsService } from "@sessions/sessions.service";
 import { SetsService } from "@sets/sets.service";
 import { UsersService } from "@users/users.service";
 import { UsersExercisesService } from "@users-exercises/users-exercises.service";
@@ -18,9 +19,10 @@ export class ExercisesService {
     private readonly usersExercisesService: UsersExercisesService,
     private readonly usersService: UsersService,
     private readonly setsService: SetsService,
+    private readonly sessionsService: SessionsService,
   ) {}
 
-  async create(createExerciseDto: CreateExerciseDto) {
+  async createExercise(createExerciseDto: CreateExerciseDto) {
     const foundUser = await this.usersService.find({
       id: createExerciseDto.userId,
     });
@@ -65,8 +67,41 @@ export class ExercisesService {
     return await this.exercisesRepository.find();
   }
 
-  async update(id: string, updateExerciseDto: UpdateExerciseDto) {
-    // const sets = await this.exercisesRepository.find({ where: {} });
+  async editExercise(
+    userId: string,
+    exerciseId: string,
+    updateExerciseDto: UpdateExerciseDto,
+  ) {
+    const sessionFounded = await this.sessionsService.findSession(
+      userId,
+      exerciseId,
+      updateExerciseDto.date,
+    );
+
+    if (sessionFounded?.id) {
+      const sets = await this.setsService.findSetsBySessionId(
+        sessionFounded.id,
+      );
+
+      if (sets?.length) {
+        return await this.setsService.addSets(updateExerciseDto.sets);
+      } else {
+        throw new BadRequestException("Подходы по этой сессии не найдены");
+      }
+    } else {
+      const setsUnassigned = await this.setsService.findSetsWithoutSessions(
+        userId,
+        exerciseId,
+      );
+
+      console.log(setsUnassigned);
+
+      if (setsUnassigned?.length) {
+        return await this.setsService.addSets(updateExerciseDto.sets);
+      } else {
+        throw new BadRequestException("Подходы по этому упражнению не найдены");
+      }
+    }
   }
 
   async remove(id: string) {

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post } from "@nestjs/common";
 
 import { CreateUsersExerciseDto } from "./dto/create-users-exercise.dto";
 import { UsersExercisesService } from "./users-exercises.service";
@@ -20,10 +20,5 @@ export class UsersExercisesController {
   @Get(":id")
   findOne(@Param("id") id: string) {
     return this.usersExercisesService.findByUserId(id);
-  }
-
-  @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.usersExercisesService.remove(+id);
   }
 }
