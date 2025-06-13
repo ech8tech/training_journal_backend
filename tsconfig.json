@@ -16,6 +16,16 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@app/*": ["src/app/*"],
+      "@users/*": ["src/users/*"],
+      "@profiles/*": ["src/profiles/*"],
+      "@exercises/*": ["src/exercises/*"],
+      "@users-exercises/*": ["src/users-exercises/*"],
+      "@sessions/*": ["src/sessions/*"],
+      "@sets/*": ["src/sets/*"],
+      "@auth/*": ["src/auth/*"],
+    }
   }
 }
