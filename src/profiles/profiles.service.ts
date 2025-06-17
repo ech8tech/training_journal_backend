@@ -4,6 +4,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 
@@ -17,23 +18,30 @@ export class ProfilesService {
     private readonly profilesRepository: Repository<Profile>,
   ) {}
 
-  async getProfiles() {
-    return await this.profilesRepository.find();
+  async getProfile(userId: string) {
+    const profileFound = await this.profilesRepository.findOneBy({ userId });
+
+    if (!profileFound) {
+      throw new NotFoundException("Профиль не найден");
+    }
+
+    return profileFound;
   }
 
-  async getUserProfile(userId: string) {
-    return await this.profilesRepository.findOneBy({ userId });
-  }
+  async createProfile(userId: string, createProfileDto: CreateProfileDto) {
+    const profile = await this.getProfile(userId);
 
-  async createProfile(profile: CreateProfileDto, userId: string) {
-    const userProfile = await this.getUserProfile(userId);
-
-    if (userProfile) {
-      throw new BadRequestException("Profile already exists");
+    if (profile) {
+      throw new BadRequestException(
+        "Профиль у данного пользователя уже существует",
+      );
     }
 
     try {
-      return await this.profilesRepository.save({ ...profile, userId });
+      return await this.profilesRepository.save({
+        ...createProfileDto,
+        userId,
+      });
     } catch (error) {
       throw new InternalServerErrorException("Ошибка создания профиля");
     }

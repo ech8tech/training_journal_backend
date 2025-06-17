@@ -1,7 +1,12 @@
 import { Repository } from "typeorm";
 
 import { Exercise } from "@exercises/entities/exercise.entity";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { SessionsService } from "@sessions/sessions.service";
 import { SetsService } from "@sets/sets.service";
@@ -22,49 +27,43 @@ export class ExercisesService {
     private readonly sessionsService: SessionsService,
   ) {}
 
-  async createExercise(createExerciseDto: CreateExerciseDto) {
-    const foundUser = await this.usersService.find({
-      id: createExerciseDto.userId,
-    });
+  async createExercise(userId: string, createExerciseDto: CreateExerciseDto) {
+    try {
+      const exercise = await this.exercisesRepository.save({
+        name: createExerciseDto.name,
+        muscleGroup: createExerciseDto.muscleGroup,
+        muscleType: createExerciseDto.muscleType,
+      });
 
-    if (!foundUser?.id) {
-      throw new BadRequestException("Не найден пользователь");
+      if (!exercise) {
+        new BadRequestException("Не удалось создать упражнение");
+      }
+
+      const usersExercises =
+        await this.usersExercisesService.createUserExercise({
+          userId,
+          exerciseId: exercise.id,
+        });
+
+      if (!usersExercises) {
+        new BadRequestException("Не удалось связать упражнение");
+      }
+
+      if (createExerciseDto?.sets?.length) {
+        const sets = createExerciseDto.sets.map((set) => ({
+          ...set,
+          userId,
+          exerciseId: exercise.id,
+          sessionId: null,
+        }));
+
+        await this.setsService.saveSets(sets);
+      }
+
+      return usersExercises;
+    } catch (e) {
+      throw new InternalServerErrorException(e);
     }
-
-    const exercise = await this.exercisesRepository.save({
-      name: createExerciseDto.name,
-      muscleGroup: createExerciseDto.muscleGroup,
-    });
-
-    if (!exercise) {
-      throw new BadRequestException("Не удалось создать упражнение");
-    }
-
-    const usersExercises = await this.usersExercisesService.create({
-      userId: foundUser.id,
-      exerciseId: exercise.id,
-    });
-
-    if (!usersExercises) {
-      throw new BadRequestException("Не удалось связать упражнение");
-    }
-
-    if (createExerciseDto?.sets?.length) {
-      const sets = createExerciseDto.sets.map((set) => ({
-        ...set,
-        userId: foundUser.id,
-        exerciseId: exercise.id,
-        sessionId: null,
-      }));
-
-      return await this.setsService.addSets(sets);
-    }
-
-    throw new BadRequestException("Не удалось установить подходы к упражнению");
-  }
-
-  async findAll() {
-    return await this.exercisesRepository.find();
   }
 
   async editExercise(
@@ -72,32 +71,29 @@ export class ExercisesService {
     exerciseId: string,
     updateExerciseDto: UpdateExerciseDto,
   ) {
-    const sessionFounded = await this.sessionsService.findSession(
+    const sessionFounded = await this.sessionsService.getSession(
       userId,
       exerciseId,
       updateExerciseDto.date,
     );
 
     if (sessionFounded?.id) {
-      const sets = await this.setsService.findSetsBySessionId(
-        sessionFounded.id,
-      );
+      // const sets = await this.setsService.getSets(sessionFounded.id);
+      const sets = sessionFounded?.sets;
 
       if (sets?.length) {
-        return await this.setsService.addSets(updateExerciseDto.sets);
+        return await this.setsService.saveSets(updateExerciseDto.sets);
       } else {
-        throw new BadRequestException("Подходы по этой сессии не найдены");
+        throw new NotFoundException("Подходы по этой сессии не найдены");
       }
     } else {
-      const setsUnassigned = await this.setsService.findSetsWithoutSessions(
+      const setsUnassigned = await this.setsService.getUnassignedSets(
         userId,
         exerciseId,
       );
 
-      console.log(setsUnassigned);
-
       if (setsUnassigned?.length) {
-        return await this.setsService.addSets(updateExerciseDto.sets);
+        return await this.setsService.saveSets(updateExerciseDto.sets);
       } else {
         throw new BadRequestException("Подходы по этому упражнению не найдены");
       }

@@ -17,12 +17,21 @@ import { CreateExerciseDto } from "./dto/create-exercise.dto";
 import { UpdateExerciseDto } from "./dto/update-exercise.dto";
 import { ExercisesService } from "./exercises.service";
 
-@Controller("exercises")
+@Controller("exercise")
 export class ExercisesController {
   constructor(
     private readonly exercisesService: ExercisesService,
     private readonly usersExerciseService: UsersExercisesService,
   ) {}
+
+  @Get("all/:muscleGroup")
+  @UseGuards(JwtAuthGuard)
+  findAll(
+    @CurrentUser() user: User,
+    @Param("muscleGroup") muscleGroup: string,
+  ) {
+    return this.usersExerciseService.getUserExercises(user.id, muscleGroup);
+  }
 
   @Post("create")
   @UseGuards(JwtAuthGuard)
@@ -30,10 +39,7 @@ export class ExercisesController {
     @CurrentUser() user: User,
     @Body() createExerciseDto: CreateExerciseDto,
   ) {
-    return this.exercisesService.createExercise({
-      ...createExerciseDto,
-      userId: user?.id,
-    });
+    return this.exercisesService.createExercise(user.id, createExerciseDto);
   }
 
   @Patch("edit/:exerciseId")
@@ -53,17 +59,7 @@ export class ExercisesController {
   @Delete("delete/:exerciseId")
   @UseGuards(JwtAuthGuard)
   delete(@CurrentUser() user: User, @Param("exerciseId") exerciseId: string) {
-    return this.usersExerciseService.removeUserExercise(user.id, exerciseId);
-  }
-
-  @Get()
-  findAll() {
-    return this.exercisesService.findAll();
-  }
-
-  @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.exercisesService.remove(id);
+    return this.usersExerciseService.deleteUserExercise(user.id, exerciseId);
   }
 
   @Delete()

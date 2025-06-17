@@ -76,14 +76,14 @@ export class AuthService {
       throw new BadRequestException("Не удалось обновить Refresh Token");
     }
 
-    const userProfile = await this.profilesService.getUserProfile(user.id);
+    const userProfile = await this.profilesService.getProfile(user.id);
 
-    return { ...user, accessToken, hasProfile: !!userProfile?.id };
+    return { ...user, accessToken, hasProfile: !!userProfile.id };
   }
 
   async verifyUser(email: string, password: string) {
     try {
-      const user = await this.usersService.find({ email });
+      const user = await this.usersService.findUser({ email });
 
       const authenticated = await compare(password, user.password);
 
@@ -99,7 +99,7 @@ export class AuthService {
 
   async verifyUserRefreshToken(refreshToken: string, payload: TokenPayload) {
     try {
-      const user = await this.usersService.find({ id: payload.userId });
+      const user = await this.usersService.findUser({ id: payload.userId });
 
       const authenticated = await compare(refreshToken, user.refreshToken);
 

@@ -5,47 +5,61 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Set } from "@sets/entities/set.entity";
 
 import { CreateSetDto } from "./dto/create-set.dto";
-import { UpdateSetDto } from "./dto/update-set.dto";
 
 @Injectable()
 export class SetsService {
   constructor(
     @InjectRepository(Set)
-    private readonly sets: Repository<Set>,
+    private readonly setsRepository: Repository<Set>,
   ) {}
 
-  async addSets(createSetDto: CreateSetDto[]) {
-    console.log(createSetDto);
+  async saveSets(createSetDto: CreateSetDto[]) {
     try {
-      return await this.sets.save(createSetDto);
+      return await this.setsRepository.save(createSetDto);
     } catch (e) {
       console.log(e);
     }
   }
 
-  async findAll() {
-    return await this.sets.find();
-  }
-
-  async findSetsWithoutSessions(userId: string, exerciseId: string) {
-    return await this.sets.find({
-      where: { userId, exerciseId, sessionId: IsNull() },
+  async getUnassignedSets(userId: string, exerciseId: string) {
+    return await this.setsRepository.findBy({
+      userId,
+      exerciseId,
+      sessionId: IsNull(),
     });
   }
 
-  async findSetsBySessionId(sessionId: string) {
-    return await this.sets.find({ where: { sessionId } });
+  async getSets(sessionId: string) {
+    return await this.setsRepository.findBy({ sessionId });
   }
 
-  async updateSetsSessions(ids: string[], sessionId: string) {
-    return await this.sets.update({ id: In(ids) }, { sessionId });
+  async getSetsBatch({
+    sessionIds = [],
+    exerciseIds = [],
+  }: {
+    sessionIds?: string[];
+    exerciseIds?: string[];
+  }) {
+    if (sessionIds.length) {
+      return await this.setsRepository.find({
+        where: { sessionId: In(sessionIds) },
+      });
+    }
+
+    if (exerciseIds.length) {
+      return await this.setsRepository.find({
+        where: { exerciseId: In(exerciseIds) },
+      });
+    }
   }
 
-  update(id: number, updateSetDto: UpdateSetDto) {
-    return `This action updates a #${id} set`;
+  async getUnassignedSetsBatch(userId: string, exerciseIds: string[]) {
+    return await this.setsRepository.find({
+      where: { userId, exerciseId: In(exerciseIds), sessionId: IsNull() },
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} set`;
+  async updateSets(ids: string[], sessionId: string) {
+    return await this.setsRepository.update({ id: In(ids) }, { sessionId });
   }
 }

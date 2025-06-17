@@ -1,5 +1,5 @@
 import { hash } from "bcryptjs";
-import { FindOneOptions, Repository } from "typeorm";
+import { Repository } from "typeorm";
 
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -19,13 +19,13 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
-  async find(
+  async findUser(
     user: Partial<Pick<User, "id" | "email">>,
-    options?: FindOneOptions<User>,
+    // options?: FindOneOptions<User>,
   ) {
-    const foundUser = await this.usersRepository.findOne({
-      where: user,
-      ...options,
+    const foundUser = await this.usersRepository.findOneBy({
+      ...user,
+      // ...options,
     });
 
     if (!foundUser) {
