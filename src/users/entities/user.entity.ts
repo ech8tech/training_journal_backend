@@ -6,8 +6,8 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 
+import { Exercise } from "@exercises/entities/exercise.entity";
 import { Profile } from "@profiles/entities/profile.entity";
-import { UserExercise } from "@users-exercises/entities/user-exercise.entity";
 
 @Entity("Users")
 export class User {
@@ -31,8 +31,8 @@ export class User {
   })
   profile: Profile;
 
-  @OneToMany(() => UserExercise, (userExercise) => userExercise.user, {
+  @OneToMany(() => Exercise, (exercise) => exercise.user, {
     cascade: true,
   })
-  usersExercises: UserExercise[];
+  exercises: Exercise[];
 }

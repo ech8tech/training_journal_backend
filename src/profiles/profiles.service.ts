@@ -4,7 +4,6 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
-  NotFoundException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 
@@ -19,13 +18,7 @@ export class ProfilesService {
   ) {}
 
   async getProfile(userId: string) {
-    const profileFound = await this.profilesRepository.findOneBy({ userId });
-
-    if (!profileFound) {
-      throw new NotFoundException("Профиль не найден");
-    }
-
-    return profileFound;
+    return await this.profilesRepository.findOneBy({ userId });
   }
 
   async createProfile(userId: string, createProfileDto: CreateProfileDto) {

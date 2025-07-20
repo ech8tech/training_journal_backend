@@ -31,13 +31,14 @@ export class SessionsController {
     return await this.sessionsService.createSession(user.id, createSessionDto);
   }
 
-  @Delete("delete")
+  @Delete("delete/:exerciseId")
   @UseGuards(JwtAuthGuard)
   async delete(
     @CurrentUser() user: User,
+    @Param("exerciseId") exerciseId: string,
     @Body() deleteSessionDto: DeleteSessionDto,
   ) {
-    return await this.sessionsService.deleteSession(user.id, deleteSessionDto);
+    return await this.sessionsService.deleteSession(user.id, exerciseId);
   }
 
   @Get(":id")

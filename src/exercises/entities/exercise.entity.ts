@@ -1,15 +1,17 @@
 import {
   Column,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  Unique,
 } from "typeorm";
 
-import { UserExercise } from "@users-exercises/entities/user-exercise.entity";
+import { Session } from "@sessions/entities/session.entity";
+import { SetEntity } from "@sets/entities/set.entity";
+import { User } from "@users/entities/user.entity";
 
 @Entity("Exercises")
-@Unique("UQ_name_muscleGroup_muscleType", ["name", "muscleGroup", "muscleType"])
 export class Exercise {
   @PrimaryGeneratedColumn("uuid")
   id: string;
@@ -23,8 +25,22 @@ export class Exercise {
   @Column({ nullable: true, length: 255 })
   muscleType: string;
 
-  @OneToMany(() => UserExercise, (userExercise) => userExercise.exercise, {
+  @Column({ nullable: true })
+  userId: string;
+
+  @ManyToOne(() => User, (user) => user.exercises, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({ name: "userId" })
+  user: User;
+
+  @OneToMany(() => SetEntity, (set) => set.exercise, {
     cascade: true,
   })
-  usersExercises: UserExercise[];
+  sets: SetEntity[];
+
+  @OneToMany(() => Session, (session) => session.exercise, {
+    cascade: true,
+  })
+  sessions: Session[];
 }

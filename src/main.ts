@@ -1,4 +1,4 @@
-import * as cookieParser from "cookie-parser";
+import cookieParser from "cookie-parser";
 import { GlobalExceptionFilter } from "src/utils/exceptions";
 
 import { AppModule } from "@app/app.module";

@@ -1,11 +1,16 @@
+import dayjs from "dayjs";
 import { In, Repository } from "typeorm";
 
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Session } from "@sessions/entities/session.entity";
 import { SetsService } from "@sets/sets.service";
 
-import { CreateSessionDto, DeleteSessionDto } from "./dto/create-session.dto";
+import { CreateSessionDto } from "./dto/create-session.dto";
 
 @Injectable()
 export class SessionsService {
@@ -21,7 +26,10 @@ export class SessionsService {
 
   async getSessions(userId: string, exercisesIds: string[]) {
     return await this.sessionRepository.find({
-      where: { userId, exerciseId: In(exercisesIds) },
+      where: {
+        userId,
+        exerciseId: In(exercisesIds),
+      },
       order: { date: "DESC" },
     });
   }
@@ -41,36 +49,62 @@ export class SessionsService {
         date: createSessionDto.date,
       });
 
-      const setsFounded = await this.setsService.getUnassignedSets(
-        userId,
-        createSessionDto.exerciseId,
-      );
+      // const setsUnassigned = await this.setsService.getUnassignedSets(
+      //   userId,
+      //   createSessionDto.exerciseId,
+      // );
+      //
+      // const setsUnassignedIds = setsUnassigned.map((set) => set.id);
+      //
+      // if (setsUnassignedIds?.length) {
+      //   return await this.setsService.updateSessionsInSets(
+      //     setsUnassignedIds,
+      //     sessionCreated.id,
+      //   );
+      // }
 
-      const setsIds = setsFounded.map((set) => set.id);
-
-      if (setsFounded?.length) {
-        return await this.setsService.updateSets(setsIds, sessionCreated.id);
+      if (createSessionDto?.sets?.length) {
+        return await this.setsService.saveSets(
+          createSessionDto.sets.map((set) => ({
+            ...set,
+            sessionId: sessionCreated.id,
+            exerciseId: createSessionDto.exerciseId,
+            userId,
+          })),
+        );
       }
+
+      return new BadRequestException("Добавьте подходы для создании сессии");
     }
+
+    return new BadRequestException(
+      "Сессия для этого упражнения уже существует",
+    );
   }
 
-  async deleteSession(userId: string, deleteSessionDto: DeleteSessionDto) {
+  async deleteSession(userId: string, exerciseId: string) {
     const sessionFounded = await this.getSession(
       userId,
-      deleteSessionDto.exerciseId,
-      deleteSessionDto.date,
+      exerciseId,
+      dayjs().format("YYYY-MM-DD"),
     );
 
-    if (sessionFounded) {
-      const setsFounded = await this.setsService.getSets(sessionFounded.id);
-
-      if (setsFounded?.length) {
-        return await this.sessionRepository.delete(sessionFounded.id);
-      } else {
-        throw new BadRequestException("Не найдены подходы по этой сессии");
-      }
-    } else {
-      throw new BadRequestException("Не найдена сессия");
+    if (!sessionFounded) {
+      throw new NotFoundException("Сессия не найдена");
     }
+
+    return await this.sessionRepository.remove(sessionFounded);
+
+    // if (sessionFounded) {
+    //   const setsFounded = await this.setsService.getSets(sessionFounded.id);
+    //
+    //   if (setsFounded?.length) {
+    //     return await this.sessionRepository.delete(sessionFounded.id);
+    //   } else {
+    //     throw new BadRequestException("Не найдены подходы по этой сессии");
+    //   }
+    // } else {
+    //   throw new BadRequestException("Не найдена сессия");
+    // }
   }
 }

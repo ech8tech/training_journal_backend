@@ -10,7 +10,6 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { UsersModule } from "@users/users.module";
-import { UsersExercisesModule } from "@users-exercises/users-exercises.module";
 
 import { AppService } from "./app.service";
 
@@ -39,7 +38,7 @@ import { AppService } from "./app.service";
     UsersModule,
     ProfilesModule,
     ExercisesModule,
-    UsersExercisesModule,
+    // UsersExercisesModule,
     SessionsModule,
     SetsModule,
   ],
