@@ -20,7 +20,7 @@ export class SessionsService {
     private readonly setsService: SetsService,
   ) {}
 
-  async getSession(userId: string, exerciseId: string, date: string) {
+  async getSession(userId: string, exerciseId: string, date?: string) {
     return await this.sessionRepository.findOneBy({ userId, exerciseId, date });
   }
 
@@ -30,6 +30,7 @@ export class SessionsService {
         userId,
         exerciseId: In(exercisesIds),
       },
+      relations: ["sets"],
       order: { date: "DESC" },
     });
   }

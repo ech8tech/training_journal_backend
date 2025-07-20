@@ -84,8 +84,43 @@ export class ExercisesService {
     }
   }
 
-  async getExercise(userId: string, exerciseId: string) {
-    return await this.setsService.getSetsByExerciseId(userId, exerciseId);
+  async getExerciseGraphData(userId: string, exerciseId: string) {
+    const exercise = await this.exercisesRepository.findOneBy({
+      id: exerciseId,
+    });
+
+    if (!exercise) {
+      return new NotFoundException("Упражнение не найдено");
+    }
+
+    const sessions = await this.sessionsService.getSessions(userId, [
+      exerciseId,
+    ]);
+
+    if (!sessions?.length) {
+      return new NotFoundException("Нет сессий по этому упражнению");
+    }
+
+    const graphData = {};
+
+    for (const session of sessions) {
+      const commonRate = session?.sets.reduce((rate, set) => {
+        return rate + set.reps * set.weight;
+      }, 0);
+
+      graphData[session.id] = {
+        date: session.date,
+        commonRate,
+      };
+    }
+
+    return {
+      exerciseName: exercise.name,
+      muscleGroup: exercise.muscleGroup,
+      graphData: Object.values(graphData),
+    };
+
+    // console.log(graphData);
   }
 
   async getExercises(userId: string, muscleGroup: string) {
@@ -125,7 +160,8 @@ export class ExercisesService {
     }, lastSessionByExercises);
 
     // упражнения с последними подходами и подходами без назначенных сессий
-    const setsByExercises = await this.setsService.getSets(sessionByExercises);
+    const setsByExercises =
+      await this.setsService.combineSets(sessionByExercises);
 
     return exercises.map((exercise) => ({
       ...exercise,

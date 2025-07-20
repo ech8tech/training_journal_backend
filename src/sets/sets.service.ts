@@ -17,11 +17,14 @@ export class SetsService {
     return await this.setsRepository.save(createSetDto);
   }
 
-  async getSetsByExerciseId(userId: string, exerciseId: string) {
-    return await this.setsRepository.findBy({ userId, exerciseId });
-  }
+  // async getSetsBySessionId(userId: string, sessionId: string[]) {
+  //   return await this.setsRepository.findBy({
+  //     userId,
+  //     sessionId: In(sessionId),
+  //   });
+  // }
 
-  async getSets(sessionByExercises: Record<string, string | null>) {
+  async combineSets(sessionByExercises: Record<string, string | null>) {
     const exerciseIds = Object.keys(sessionByExercises);
     if (exerciseIds.length === 0) {
       return {};

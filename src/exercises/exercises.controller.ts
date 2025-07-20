@@ -28,10 +28,10 @@ export class ExercisesController {
     return this.exercisesService.getExercises(user.id, muscleGroup);
   }
 
-  @Get("exerciseId")
+  @Get(":exerciseId")
   @UseGuards(JwtAuthGuard)
-  find(@CurrentUser() user: User, @Param("exerciseId") exerciseId: string) {
-    return this.exercisesService.getExercise(user.id, exerciseId);
+  findData(@CurrentUser() user: User, @Param("exerciseId") exerciseId: string) {
+    return this.exercisesService.getExerciseGraphData(user.id, exerciseId);
   }
 
   @Post("create")
