@@ -7,8 +7,8 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 
-import { Set } from "@sets/entities/set.entity";
-import { UserExercise } from "@users-exercises/entities/user-exercise.entity";
+import { Exercise } from "@exercises/entities/exercise.entity";
+import { SetEntity } from "@sets/entities/set.entity";
 
 @Entity("Sessions")
 export class Session {
@@ -24,18 +24,15 @@ export class Session {
   @Column("uuid")
   exerciseId: string;
 
-  @OneToMany(() => Set, (set) => set.session, {
+  @OneToMany(() => SetEntity, (set) => set.session, {
     cascade: true,
   })
   @JoinColumn()
-  sets: Set[];
+  sets: SetEntity[];
 
-  @ManyToOne(() => UserExercise, (userExercise) => userExercise.sets, {
+  @ManyToOne(() => Exercise, (exercise) => exercise.sets, {
     onDelete: "CASCADE",
   })
-  @JoinColumn([
-    { name: "userId", referencedColumnName: "userId" },
-    { name: "exerciseId", referencedColumnName: "exerciseId" },
-  ])
-  userExercise: UserExercise;
+  @JoinColumn([{ name: "exerciseId" }])
+  exercise: Exercise;
 }

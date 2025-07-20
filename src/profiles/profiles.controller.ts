@@ -12,15 +12,8 @@ export class ProfilesController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async getProfiles() {
-    return await this.profileService.getProfiles();
-  }
-
-  @Get("check")
-  @UseGuards(JwtAuthGuard)
   async getUserProfile(@CurrentUser() user: User) {
-    const profileFound = await this.profileService.getUserProfile(user.id);
-    return { id: profileFound?.id };
+    return await this.profileService.getProfile(user.id);
   }
 
   @Post("create")
@@ -29,6 +22,6 @@ export class ProfilesController {
     @CurrentUser() user: User,
     @Body() createProfileDto: CreateProfileDto,
   ) {
-    return await this.profileService.createProfile(createProfileDto, user.id);
+    return await this.profileService.createProfile(user.id, createProfileDto);
   }
 }

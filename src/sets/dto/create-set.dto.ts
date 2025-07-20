@@ -5,7 +5,7 @@ export class CreateSetDto {
 
   weight: number;
 
-  userId: string;
+  // userId: string;
 
   exerciseId: string;
 

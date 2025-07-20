@@ -17,23 +17,24 @@ export class ProfilesService {
     private readonly profilesRepository: Repository<Profile>,
   ) {}
 
-  async getProfiles() {
-    return await this.profilesRepository.find();
-  }
-
-  async getUserProfile(userId: string) {
+  async getProfile(userId: string) {
     return await this.profilesRepository.findOneBy({ userId });
   }
 
-  async createProfile(profile: CreateProfileDto, userId: string) {
-    const userProfile = await this.getUserProfile(userId);
+  async createProfile(userId: string, createProfileDto: CreateProfileDto) {
+    const profile = await this.getProfile(userId);
 
-    if (userProfile) {
-      throw new BadRequestException("Profile already exists");
+    if (profile) {
+      throw new BadRequestException(
+        "Профиль у данного пользователя уже существует",
+      );
     }
 
     try {
-      return await this.profilesRepository.save({ ...profile, userId });
+      return await this.profilesRepository.save({
+        ...createProfileDto,
+        userId,
+      });
     } catch (error) {
       throw new InternalServerErrorException("Ошибка создания профиля");
     }

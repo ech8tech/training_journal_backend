@@ -1,6 +1,15 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from "typeorm";
 
-import { UserExercise } from "@users-exercises/entities/user-exercise.entity";
+import { Session } from "@sessions/entities/session.entity";
+import { SetEntity } from "@sets/entities/set.entity";
+import { User } from "@users/entities/user.entity";
 
 @Entity("Exercises")
 export class Exercise {
@@ -13,8 +22,25 @@ export class Exercise {
   @Column({ length: 255 })
   muscleGroup: string;
 
-  @OneToMany(() => UserExercise, (userExercise) => userExercise.exercise, {
+  @Column({ nullable: true, length: 255 })
+  muscleType: string;
+
+  @Column({ nullable: true })
+  userId: string;
+
+  @ManyToOne(() => User, (user) => user.exercises, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({ name: "userId" })
+  user: User;
+
+  @OneToMany(() => SetEntity, (set) => set.exercise, {
     cascade: true,
   })
-  usersExercises: UserExercise[];
+  sets: SetEntity[];
+
+  @OneToMany(() => Session, (session) => session.exercise, {
+    cascade: true,
+  })
+  sessions: Session[];
 }

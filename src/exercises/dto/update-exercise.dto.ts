@@ -1,6 +1,8 @@
 import { CreateSetDto } from "@sets/dto/create-set.dto";
 
 export class UpdateExerciseDto {
-  readonly date: string;
-  readonly sets: CreateSetDto[];
+  readonly isDone?: boolean;
+  readonly muscleType: string;
+  readonly name: string;
+  readonly sets?: CreateSetDto[];
 }

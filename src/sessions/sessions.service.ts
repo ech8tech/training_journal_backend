@@ -1,12 +1,16 @@
-import { Repository } from "typeorm";
+import dayjs from "dayjs";
+import { In, Repository } from "typeorm";
 
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Session } from "@sessions/entities/session.entity";
 import { SetsService } from "@sets/sets.service";
 
-import { CreateSessionDto, DeleteSessionDto } from "./dto/create-session.dto";
-import { UpdateSessionDto } from "./dto/update-session.dto";
+import { CreateSessionDto } from "./dto/create-session.dto";
 
 @Injectable()
 export class SessionsService {
@@ -16,14 +20,22 @@ export class SessionsService {
     private readonly setsService: SetsService,
   ) {}
 
-  async findSession(userId: string, exerciseId: string, date: string) {
-    return await this.sessionRepository.findOne({
-      where: { userId, exerciseId, date },
+  async getSession(userId: string, exerciseId: string, date: string) {
+    return await this.sessionRepository.findOneBy({ userId, exerciseId, date });
+  }
+
+  async getSessions(userId: string, exercisesIds: string[]) {
+    return await this.sessionRepository.find({
+      where: {
+        userId,
+        exerciseId: In(exercisesIds),
+      },
+      order: { date: "DESC" },
     });
   }
 
   async createSession(userId: string, createSessionDto: CreateSessionDto) {
-    const sessionFounded = await this.findSession(
+    const sessionFounded = await this.getSession(
       userId,
       createSessionDto.exerciseId,
       createSessionDto.date,
@@ -37,49 +49,62 @@ export class SessionsService {
         date: createSessionDto.date,
       });
 
-      const setsFounded = await this.setsService.findSetsWithoutSessions(
-        userId,
-        createSessionDto.exerciseId,
-      );
+      // const setsUnassigned = await this.setsService.getUnassignedSets(
+      //   userId,
+      //   createSessionDto.exerciseId,
+      // );
+      //
+      // const setsUnassignedIds = setsUnassigned.map((set) => set.id);
+      //
+      // if (setsUnassignedIds?.length) {
+      //   return await this.setsService.updateSessionsInSets(
+      //     setsUnassignedIds,
+      //     sessionCreated.id,
+      //   );
+      // }
 
-      const setsIds = setsFounded.map((set) => set.id);
-
-      if (setsFounded?.length) {
-        return await this.setsService.updateSetsSessions(
-          setsIds,
-          sessionCreated.id,
+      if (createSessionDto?.sets?.length) {
+        return await this.setsService.saveSets(
+          createSessionDto.sets.map((set) => ({
+            ...set,
+            sessionId: sessionCreated.id,
+            exerciseId: createSessionDto.exerciseId,
+            userId,
+          })),
         );
       }
+
+      return new BadRequestException("Добавьте подходы для создании сессии");
     }
+
+    return new BadRequestException(
+      "Сессия для этого упражнения уже существует",
+    );
   }
 
-  async deleteSession(userId: string, deleteSessionDto: DeleteSessionDto) {
-    const sessionFounded = await this.findSession(
+  async deleteSession(userId: string, exerciseId: string) {
+    const sessionFounded = await this.getSession(
       userId,
-      deleteSessionDto.exerciseId,
-      deleteSessionDto.date,
+      exerciseId,
+      dayjs().format("YYYY-MM-DD"),
     );
 
-    if (sessionFounded) {
-      const setsFounded = await this.setsService.findSetsBySessionId(
-        sessionFounded.id,
-      );
-
-      if (setsFounded?.length) {
-        return await this.sessionRepository.delete(sessionFounded.id);
-      } else {
-        throw new BadRequestException("Не найдены подходы по этой сессии");
-      }
-    } else {
-      throw new BadRequestException("Не найдена сессия");
+    if (!sessionFounded) {
+      throw new NotFoundException("Сессия не найдена");
     }
-  }
 
-  async findAll() {
-    return await this.sessionRepository.find();
-  }
+    return await this.sessionRepository.remove(sessionFounded);
 
-  update(id: number, updateSessionDto: UpdateSessionDto) {
-    return `This action updates a #${id} session`;
+    // if (sessionFounded) {
+    //   const setsFounded = await this.setsService.getSets(sessionFounded.id);
+    //
+    //   if (setsFounded?.length) {
+    //     return await this.sessionRepository.delete(sessionFounded.id);
+    //   } else {
+    //     throw new BadRequestException("Не найдены подходы по этой сессии");
+    //   }
+    // } else {
+    //   throw new BadRequestException("Не найдена сессия");
+    // }
   }
 }

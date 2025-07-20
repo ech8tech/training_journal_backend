@@ -1,12 +1,17 @@
+import dayjs from "dayjs";
 import { Repository } from "typeorm";
 
 import { Exercise } from "@exercises/entities/exercise.entity";
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { SessionsService } from "@sessions/sessions.service";
 import { SetsService } from "@sets/sets.service";
 import { UsersService } from "@users/users.service";
-import { UsersExercisesService } from "@users-exercises/users-exercises.service";
 
 import { CreateExerciseDto } from "./dto/create-exercise.dto";
 import { UpdateExerciseDto } from "./dto/update-exercise.dto";
@@ -16,55 +21,39 @@ export class ExercisesService {
   constructor(
     @InjectRepository(Exercise)
     private readonly exercisesRepository: Repository<Exercise>,
-    private readonly usersExercisesService: UsersExercisesService,
     private readonly usersService: UsersService,
     private readonly setsService: SetsService,
     private readonly sessionsService: SessionsService,
   ) {}
 
-  async createExercise(createExerciseDto: CreateExerciseDto) {
-    const foundUser = await this.usersService.find({
-      id: createExerciseDto.userId,
-    });
+  async createExercise(userId: string, createExerciseDto: CreateExerciseDto) {
+    try {
+      const exercise = await this.exercisesRepository.save({
+        name: createExerciseDto.name,
+        muscleGroup: createExerciseDto.muscleGroup,
+        muscleType: createExerciseDto.muscleType,
+        userId,
+      });
 
-    if (!foundUser?.id) {
-      throw new BadRequestException("Не найден пользователь");
+      if (!exercise) {
+        new BadRequestException("Не удалось создать упражнение");
+      }
+
+      if (createExerciseDto?.sets?.length) {
+        const sets = createExerciseDto.sets.map((set) => ({
+          ...set,
+          userId,
+          exerciseId: exercise.id,
+          sessionId: null,
+        }));
+
+        await this.setsService.saveSets(sets);
+      }
+
+      return exercise;
+    } catch (e) {
+      throw new InternalServerErrorException(e);
     }
-
-    const exercise = await this.exercisesRepository.save({
-      name: createExerciseDto.name,
-      muscleGroup: createExerciseDto.muscleGroup,
-    });
-
-    if (!exercise) {
-      throw new BadRequestException("Не удалось создать упражнение");
-    }
-
-    const usersExercises = await this.usersExercisesService.create({
-      userId: foundUser.id,
-      exerciseId: exercise.id,
-    });
-
-    if (!usersExercises) {
-      throw new BadRequestException("Не удалось связать упражнение");
-    }
-
-    if (createExerciseDto?.sets?.length) {
-      const sets = createExerciseDto.sets.map((set) => ({
-        ...set,
-        userId: foundUser.id,
-        exerciseId: exercise.id,
-        sessionId: null,
-      }));
-
-      return await this.setsService.addSets(sets);
-    }
-
-    throw new BadRequestException("Не удалось установить подходы к упражнению");
-  }
-
-  async findAll() {
-    return await this.exercisesRepository.find();
   }
 
   async editExercise(
@@ -72,43 +61,94 @@ export class ExercisesService {
     exerciseId: string,
     updateExerciseDto: UpdateExerciseDto,
   ) {
-    const sessionFounded = await this.sessionsService.findSession(
-      userId,
-      exerciseId,
-      updateExerciseDto.date,
+    const updatedExercise = await this.exercisesRepository.update(
+      { id: exerciseId, userId },
+      {
+        name: updateExerciseDto.name,
+        muscleType: updateExerciseDto.muscleType,
+      },
     );
 
-    if (sessionFounded?.id) {
-      const sets = await this.setsService.findSetsBySessionId(
-        sessionFounded.id,
-      );
+    if (!updatedExercise) {
+      throw new InternalServerErrorException("Не удалось обновить упражнение");
+    }
 
-      if (sets?.length) {
-        return await this.setsService.addSets(updateExerciseDto.sets);
-      } else {
-        throw new BadRequestException("Подходы по этой сессии не найдены");
-      }
-    } else {
-      const setsUnassigned = await this.setsService.findSetsWithoutSessions(
+    if (updateExerciseDto?.sets?.length) {
+      const sets = updateExerciseDto.sets.map((set) => ({
+        ...set,
         userId,
         exerciseId,
-      );
+      }));
 
-      console.log(setsUnassigned);
-
-      if (setsUnassigned?.length) {
-        return await this.setsService.addSets(updateExerciseDto.sets);
-      } else {
-        throw new BadRequestException("Подходы по этому упражнению не найдены");
-      }
+      return await this.setsService.saveSets(sets);
     }
   }
 
-  async remove(id: string) {
-    return await this.exercisesRepository.delete(id);
+  async getExercise(userId: string, exerciseId: string) {
+    return await this.setsService.getSetsByExerciseId(userId, exerciseId);
   }
 
-  async removeAll() {
-    await this.exercisesRepository.delete({});
+  async getExercises(userId: string, muscleGroup: string) {
+    const exercises = await this.exercisesRepository.findBy({
+      userId,
+      muscleGroup,
+    });
+
+    const exerciseIds = exercises.map((exercise) => exercise.id);
+
+    const sessions = await this.sessionsService.getSessions(
+      userId,
+      exerciseIds,
+    );
+
+    // упражнения с последними сессиями
+    const lastSessionByExercises: Record<string, string | null> = {};
+    // упражнения с сегодняшними сессиями
+    const todaySessionByExercises: Record<string, boolean> = {};
+
+    for (const session of sessions || []) {
+      if (!lastSessionByExercises[session.exerciseId]) {
+        lastSessionByExercises[session.exerciseId] = session.id;
+      }
+
+      if (session.date === dayjs().format("YYYY-MM-DD")) {
+        todaySessionByExercises[session.exerciseId] = true;
+      }
+    }
+
+    // упражнения с последними сессиями и без СУЩЕСТВУЮЩИХ сессий
+    const sessionByExercises = exerciseIds.reduce((acc, exerciseId) => {
+      if (lastSessionByExercises[exerciseId]) {
+        return acc;
+      }
+      return { ...acc, [exerciseId]: null };
+    }, lastSessionByExercises);
+
+    // упражнения с последними подходами и подходами без назначенных сессий
+    const setsByExercises = await this.setsService.getSets(sessionByExercises);
+
+    return exercises.map((exercise) => ({
+      ...exercise,
+      isDone: todaySessionByExercises[exercise.id] || false,
+      sets: setsByExercises[exercise.id]?.map((set) => ({
+        id: set.id,
+        order: set.order,
+        reps: set.reps,
+        weight: set.weight,
+      })),
+    }));
+  }
+
+  async deleteExercise(userId: string, exerciseId: string) {
+    const exercise = await this.exercisesRepository.findOneBy({
+      id: exerciseId,
+      userId,
+    });
+
+    if (!exercise) {
+      throw new NotFoundException("Упражнение не найдено");
+    }
+
+    return await this.exercisesRepository.remove(exercise);
   }
 }

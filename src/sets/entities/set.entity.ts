@@ -6,11 +6,11 @@ import {
   PrimaryGeneratedColumn,
 } from "typeorm";
 
+import { Exercise } from "@exercises/entities/exercise.entity";
 import { Session } from "@sessions/entities/session.entity";
-import { UserExercise } from "@users-exercises/entities/user-exercise.entity";
 
 @Entity("Sets")
-export class Set {
+export class SetEntity {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
@@ -38,12 +38,9 @@ export class Set {
   @JoinColumn({ name: "sessionId" })
   session: Session | null;
 
-  @ManyToOne(() => UserExercise, (userExercise) => userExercise.sets, {
+  @ManyToOne(() => Exercise, (exercise) => exercise.sets, {
     onDelete: "CASCADE",
   })
-  @JoinColumn([
-    { name: "userId", referencedColumnName: "userId" },
-    { name: "exerciseId", referencedColumnName: "exerciseId" },
-  ])
-  userExercise: UserExercise;
+  @JoinColumn([{ name: "exerciseId" }])
+  exercise: Exercise;
 }

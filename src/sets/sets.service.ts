@@ -2,50 +2,82 @@ import { In, IsNull, Repository } from "typeorm";
 
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Set } from "@sets/entities/set.entity";
+import { SetEntity } from "@sets/entities/set.entity";
 
 import { CreateSetDto } from "./dto/create-set.dto";
-import { UpdateSetDto } from "./dto/update-set.dto";
 
 @Injectable()
 export class SetsService {
   constructor(
-    @InjectRepository(Set)
-    private readonly sets: Repository<Set>,
+    @InjectRepository(SetEntity)
+    private readonly setsRepository: Repository<SetEntity>,
   ) {}
 
-  async addSets(createSetDto: CreateSetDto[]) {
-    console.log(createSetDto);
-    try {
-      return await this.sets.save(createSetDto);
-    } catch (e) {
-      console.log(e);
+  async saveSets(createSetDto: CreateSetDto[]) {
+    return await this.setsRepository.save(createSetDto);
+  }
+
+  async getSetsByExerciseId(userId: string, exerciseId: string) {
+    return await this.setsRepository.findBy({ userId, exerciseId });
+  }
+
+  async getSets(sessionByExercises: Record<string, string | null>) {
+    const exerciseIds = Object.keys(sessionByExercises);
+    if (exerciseIds.length === 0) {
+      return {};
     }
-  }
 
-  async findAll() {
-    return await this.sets.find();
-  }
-
-  async findSetsWithoutSessions(userId: string, exerciseId: string) {
-    return await this.sets.find({
-      where: { userId, exerciseId, sessionId: IsNull() },
+    // 1) подходы без назначенных сессий
+    const setsWithNullSession = await this.setsRepository.find({
+      where: {
+        exerciseId: In(exerciseIds),
+        sessionId: IsNull(),
+      },
+      order: { order: "ASC" },
     });
+
+    // собираем exerciseIds без назначенных сессий
+    const exerciseIdsWithNullSession = new Set(
+      setsWithNullSession?.map((set) => set.exerciseId),
+    );
+
+    // 2) Для тех упражнений, где нет null-сетов, берём назначенные
+    const assignedExerciseIds = exerciseIds.filter((exerciseId) => {
+      return (
+        !exerciseIdsWithNullSession.has(exerciseId) &&
+        sessionByExercises[exerciseId] !== null
+      );
+    });
+
+    const assignedSets = assignedExerciseIds.length
+      ? await this.setsRepository.find({
+          where: {
+            exerciseId: In(assignedExerciseIds),
+            sessionId: In(
+              assignedExerciseIds.map((id) => sessionByExercises[id]!),
+            ),
+          },
+          order: { order: "ASC" },
+        })
+      : [];
+
+    // 3) Формируем результат: exerciseId -> массив SetEntity
+    const result: Record<string, SetEntity[]> = {};
+
+    for (const id of exerciseIds) {
+      if (exerciseIdsWithNullSession.has(id)) {
+        // Если есть null-сеты — берём их
+        result[id] = setsWithNullSession.filter((set) => set.exerciseId === id);
+      } else {
+        // Иначе — берём назначенные
+        result[id] = assignedSets.filter((set) => set.exerciseId === id);
+      }
+    }
+
+    return result;
   }
 
-  async findSetsBySessionId(sessionId: string) {
-    return await this.sets.find({ where: { sessionId } });
-  }
-
-  async updateSetsSessions(ids: string[], sessionId: string) {
-    return await this.sets.update({ id: In(ids) }, { sessionId });
-  }
-
-  update(id: number, updateSetDto: UpdateSetDto) {
-    return `This action updates a #${id} set`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} set`;
-  }
+  // async updateSessionsInSets(ids: string[], sessionId: string) {
+  //   return await this.setsRepository.update({ id: In(ids) }, { sessionId });
+  // }
 }
