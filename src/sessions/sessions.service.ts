@@ -50,19 +50,21 @@ export class SessionsService {
         date: createSessionDto.date,
       });
 
-      // const setsUnassigned = await this.setsService.getUnassignedSets(
-      //   userId,
-      //   createSessionDto.exerciseId,
-      // );
-      //
-      // const setsUnassignedIds = setsUnassigned.map((set) => set.id);
-      //
-      // if (setsUnassignedIds?.length) {
-      //   return await this.setsService.updateSessionsInSets(
-      //     setsUnassignedIds,
-      //     sessionCreated.id,
-      //   );
-      // }
+      const setsUnassigned = await this.setsService.getSets(
+        userId,
+        createSessionDto.exerciseId,
+      );
+
+      console.log(setsUnassigned);
+
+      if (setsUnassigned?.length) {
+        return await this.setsService.saveSets(
+          setsUnassigned.map((set) => ({
+            ...set,
+            sessionId: sessionCreated.id,
+          })),
+        );
+      }
 
       if (createSessionDto?.sets?.length) {
         return await this.setsService.saveSets(
@@ -95,17 +97,5 @@ export class SessionsService {
     }
 
     return await this.sessionRepository.remove(sessionFounded);
-
-    // if (sessionFounded) {
-    //   const setsFounded = await this.setsService.getSets(sessionFounded.id);
-    //
-    //   if (setsFounded?.length) {
-    //     return await this.sessionRepository.delete(sessionFounded.id);
-    //   } else {
-    //     throw new BadRequestException("Не найдены подходы по этой сессии");
-    //   }
-    // } else {
-    //   throw new BadRequestException("Не найдена сессия");
-    // }
   }
 }

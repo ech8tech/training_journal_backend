@@ -1,3 +1,4 @@
+import { ChartsModule } from "src/charts/charts.module";
 import { ExercisesModule } from "src/exercises/exercises.module";
 import { ProfilesModule } from "src/profiles/profiles.module";
 import { SessionsModule } from "src/sessions/sessions.module";
@@ -41,6 +42,7 @@ import { AppService } from "./app.service";
     // UsersExercisesModule,
     SessionsModule,
     SetsModule,
+    ChartsModule,
   ],
 })
 export class AppModule {

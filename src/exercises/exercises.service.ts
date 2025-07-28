@@ -11,7 +11,6 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { SessionsService } from "@sessions/sessions.service";
 import { SetsService } from "@sets/sets.service";
-import { UsersService } from "@users/users.service";
 
 import { CreateExerciseDto } from "./dto/create-exercise.dto";
 import { UpdateExerciseDto } from "./dto/update-exercise.dto";
@@ -21,7 +20,6 @@ export class ExercisesService {
   constructor(
     @InjectRepository(Exercise)
     private readonly exercisesRepository: Repository<Exercise>,
-    private readonly usersService: UsersService,
     private readonly setsService: SetsService,
     private readonly sessionsService: SessionsService,
   ) {}
@@ -84,46 +82,11 @@ export class ExercisesService {
     }
   }
 
-  async getExerciseGraphData(userId: string, exerciseId: string) {
-    const exercise = await this.exercisesRepository.findOneBy({
-      id: exerciseId,
-    });
-
-    if (!exercise) {
-      return new NotFoundException("Упражнение не найдено");
-    }
-
-    const sessions = await this.sessionsService.getSessions(userId, [
-      exerciseId,
-    ]);
-
-    if (!sessions?.length) {
-      return new NotFoundException("Нет сессий по этому упражнению");
-    }
-
-    const graphData = {};
-
-    for (const session of sessions) {
-      const commonRate = session?.sets.reduce((rate, set) => {
-        return rate + set.reps * set.weight;
-      }, 0);
-
-      graphData[session.id] = {
-        date: session.date,
-        commonRate,
-      };
-    }
-
-    return {
-      exerciseName: exercise.name,
-      muscleGroup: exercise.muscleGroup,
-      graphData: Object.values(graphData),
-    };
-
-    // console.log(graphData);
+  async getExercises(userId: string) {
+    return await this.exercisesRepository.findBy({ userId });
   }
 
-  async getExercises(userId: string, muscleGroup: string) {
+  async getExercisesByMuscleGroup(userId: string, muscleGroup: string) {
     const exercises = await this.exercisesRepository.findBy({
       userId,
       muscleGroup,
