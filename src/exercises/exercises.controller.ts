@@ -19,24 +19,27 @@ import { ExercisesService } from "./exercises.service";
 export class ExercisesController {
   constructor(private readonly exercisesService: ExercisesService) {}
 
-  @Get("all/:muscleGroup")
+  @Get("all")
   @UseGuards(JwtAuthGuard)
-  findAll(
+  getMuscleGroups(@CurrentUser() user: User) {
+    return this.exercisesService.getExercises(user.id);
+  }
+
+  @Get("muscle_group/:muscleGroup")
+  @UseGuards(JwtAuthGuard)
+  getByMuscleGroup(
     @CurrentUser() user: User,
     @Param("muscleGroup") muscleGroup: string,
   ) {
-    return this.exercisesService.getExercises(user.id, muscleGroup);
-  }
-
-  @Get(":exerciseId")
-  @UseGuards(JwtAuthGuard)
-  findData(@CurrentUser() user: User, @Param("exerciseId") exerciseId: string) {
-    return this.exercisesService.getExerciseGraphData(user.id, exerciseId);
+    return this.exercisesService.getExercisesByMuscleGroup(
+      user.id,
+      muscleGroup,
+    );
   }
 
   @Post("create")
   @UseGuards(JwtAuthGuard)
-  create(
+  createExercise(
     @CurrentUser() user: User,
     @Body() createExerciseDto: CreateExerciseDto,
   ) {
@@ -45,7 +48,7 @@ export class ExercisesController {
 
   @Patch("edit/:exerciseId")
   @UseGuards(JwtAuthGuard)
-  update(
+  updateExercise(
     @CurrentUser() user: User,
     @Param("exerciseId") exerciseId: string,
     @Body() updateExerciseDto: UpdateExerciseDto,
