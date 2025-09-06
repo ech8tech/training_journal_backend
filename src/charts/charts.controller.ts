@@ -25,6 +25,22 @@ export class ChartsController {
     );
   }
 
+  @Get("pie_chart")
+  @UseGuards(JwtAuthGuard)
+  getPieChart(
+    @CurrentUser() user: User,
+    @Query("muscleGroup") muscleGroup: string,
+    @Query("dateStart") dateStart: string,
+    @Query("dateEnd") dateEnd: string,
+  ) {
+    return this.chartsService.getPieChart(
+      user.id,
+      muscleGroup,
+      dateStart,
+      dateEnd,
+    );
+  }
+
   @Get("line_chart/:exerciseId")
   @UseGuards(JwtAuthGuard)
   getLineChart(

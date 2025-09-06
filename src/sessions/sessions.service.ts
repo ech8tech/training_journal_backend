@@ -36,53 +36,40 @@ export class SessionsService {
   }
 
   async createSession(userId: string, createSessionDto: CreateSessionDto) {
-    const sessionFounded = await this.getSession(
+    const sessionCreated = await this.sessionRepository.save({
       userId,
-      createSessionDto.exerciseId,
-      createSessionDto.date,
-    );
+      exerciseId: createSessionDto.exerciseId,
+      date: createSessionDto.date,
+    });
 
-    // если сессии нет, то добавляем сессию и обновляем подходы, добавляем sessionId вместо null
-    if (!sessionFounded) {
-      const sessionCreated = await this.sessionRepository.save({
-        userId,
-        exerciseId: createSessionDto.exerciseId,
-        date: createSessionDto.date,
-      });
+    // const setsUnassigned = await this.setsService.getSets(
+    //   userId,
+    //   createSessionDto.exerciseId,
+    // );
 
-      const setsUnassigned = await this.setsService.getSets(
-        userId,
-        createSessionDto.exerciseId,
+    // TODO: к созданному заранее упражнению - дополняет sessionId
+    // if (setsUnassigned?.length) {
+    //   return await this.setsService.saveSets(
+    //     setsUnassigned.map((set) => ({
+    //       ...set,
+    //       sessionId: sessionCreated.id,
+    //     })),
+    //   );
+    // }
+
+    // создание новых подходов
+    if (createSessionDto?.sets?.length) {
+      return await this.setsService.saveSets(
+        createSessionDto.sets.map((set) => ({
+          ...set,
+          sessionId: sessionCreated.id,
+          exerciseId: createSessionDto.exerciseId,
+          userId,
+        })),
       );
-
-      console.log(setsUnassigned);
-
-      if (setsUnassigned?.length) {
-        return await this.setsService.saveSets(
-          setsUnassigned.map((set) => ({
-            ...set,
-            sessionId: sessionCreated.id,
-          })),
-        );
-      }
-
-      if (createSessionDto?.sets?.length) {
-        return await this.setsService.saveSets(
-          createSessionDto.sets.map((set) => ({
-            ...set,
-            sessionId: sessionCreated.id,
-            exerciseId: createSessionDto.exerciseId,
-            userId,
-          })),
-        );
-      }
-
-      return new BadRequestException("Добавьте подходы для создании сессии");
     }
 
-    return new BadRequestException(
-      "Сессия для этого упражнения уже существует",
-    );
+    return new BadRequestException("Добавьте подходы для создании сессии");
   }
 
   async deleteSession(userId: string, exerciseId: string) {

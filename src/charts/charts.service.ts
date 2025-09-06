@@ -1,7 +1,8 @@
 import dayjs from "dayjs";
 import { Repository } from "typeorm";
 
-import { Injectable } from "@nestjs/common";
+import { DATE_FORMAT } from "@consts/format";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Session } from "@sessions/entities/session.entity";
 import { SetEntity } from "@sets/entities/set.entity";
@@ -16,14 +17,14 @@ export class ChartsService {
   async getLineChart(
     userId: string,
     exerciseId: string,
-    dateStart: string = dayjs().startOf("month").format("YYYY-MM-DD"),
-    dateEnd: string = dayjs().endOf("month").format("YYYY-MM-DD"),
+    dateStart: string = dayjs().startOf("month").format(DATE_FORMAT),
+    dateEnd: string = dayjs().endOf("month").format(DATE_FORMAT),
   ) {
     // 1) Делаем запрос к Session, сразу джойним Exercise и Sets
     const raw = await this.sessionRepository
       .createQueryBuilder("s")
       .innerJoin("s.exercise", "e") // связь session → exercise
-      .leftJoin("s.sets", "st") // связь session → sets
+      .innerJoin("s.sets", "st") // связь session → sets
       .where("e.id = :exerciseId", { exerciseId }) // фильтр по нужному exercise
       .andWhere("e.userId = :userId", { userId }) // проверяем, что упражнение принадлежит юзеру
       .andWhere("s.date >= :dateStart AND s.date < :dateEnd", {
@@ -37,6 +38,23 @@ export class ChartsService {
       .addSelect("s.date", "date")
       // 3) Считаем общий вес в сете: SUM(reps * weight)
       .addSelect("SUM(st.reps * st.weight)", "commonRate")
+      .addSelect(
+        `
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'id', st.id,
+                'reps', st.reps,
+                'weight', st.weight,
+                'order', st."order"
+              )
+              ORDER BY st."order", st.id
+            ),
+            '[]'::json
+          )
+          `,
+        "sets",
+      )
       // 4) Группируем по сессиям (и по полям упражнения, если СУБД требует)
       .groupBy("s.id")
       .addGroupBy("s.date")
@@ -51,6 +69,7 @@ export class ChartsService {
         sessionId: string;
         date: Date;
         commonRate: string; // в raw — обычно строка
+        sets: SetEntity[];
       }>();
 
     // 7) Если ничего не нашлось — отрабатываем 404
@@ -63,11 +82,48 @@ export class ChartsService {
 
     // 9) Собираем массив точек для графика
     const lineChartData = raw.map((r) => ({
-      date: dayjs(r.date).format("YYYY-MM-DD"),
+      date: dayjs(r.date).format(DATE_FORMAT),
       commonRate: Number(r.commonRate),
+      sets: r.sets,
     }));
 
     return { exerciseName, muscleGroup, lineChartData };
+  }
+
+  async getPieChart(
+    userId: string,
+    muscleGroup: string,
+    dateStart: string,
+    dateEnd: string,
+  ) {
+    try {
+      const raw = await this.sessionRepository
+        // 1) Делаем запрос к Session, сразу джойним Exercise
+        .createQueryBuilder("s")
+        .innerJoin("s.exercise", "e")
+        .where("e.userId = :userId", { userId })
+        .andWhere("s.date >= :dateStart AND s.date <= :dateEnd", {
+          dateStart,
+          dateEnd,
+        })
+        .andWhere("e.muscleGroup = :muscleGroup", { muscleGroup })
+        .select("e.name", "exerciseName")
+        .addSelect("COUNT(s.id)::int", "count")
+        .groupBy("e.name")
+        .orderBy("count", "DESC")
+        .getRawMany<{
+          exerciseName: string;
+          count: number;
+        }>();
+
+      if (!raw?.length) {
+        return [];
+      }
+
+      return raw;
+    } catch (e) {
+      return new BadRequestException("Ошибка получения данных");
+    }
   }
 
   async getScatterplot(
@@ -81,7 +137,6 @@ export class ChartsService {
         // 1) Делаем запрос к Session, сразу джойним Exercise и Sets
         .createQueryBuilder("s")
         .innerJoin("s.exercise", "e")
-        .leftJoin("s.sets", "st")
         .where("e.userId = :userId", { userId })
         .andWhere("s.date >= :dateStart AND s.date <= :dateEnd", {
           dateStart,
@@ -131,9 +186,6 @@ export class ChartsService {
           sets: string; // JSON‑строка
         }>();
 
-      // 7) Если ничего не нашлось — отрабатываем 404
-      // console.log(raw);
-
       if (!raw?.length) {
         return [];
       }
@@ -143,12 +195,8 @@ export class ChartsService {
         exerciseId: r.exerciseId,
         exerciseName: r.exerciseName,
         muscleGroup: r.muscleGroup,
-        date: dayjs(r.date).format("YYYY-MM-DD"),
+        date: dayjs(r.date).format(DATE_FORMAT),
         sets: r.sets,
-        // commonRate: JSON.parse(r.sets).reduce(
-        //   (sum: number, st) => sum + st.reps * st.weight,
-        //   0,
-        // ),
       }));
     } catch (e) {
       console.log(e);
@@ -157,17 +205,51 @@ export class ChartsService {
 
   async getSchedule(
     userId: string,
-    dateStart: string = dayjs().startOf("month").format("YYYY-MM-DD"),
-    dateEnd: string = dayjs().endOf("month").format("YYYY-MM-DD"),
+    dateStart: string = dayjs().startOf("month").format(DATE_FORMAT),
+    dateEnd: string = dayjs().endOf("month").format(DATE_FORMAT),
   ) {
-    return this.sessionRepository
-      .createQueryBuilder("s")
-      .where("s.userId = :userId", { userId })
-      .andWhere("s.date >= :dateStart AND s.date <= :dateEnd", {
-        dateStart,
-        dateEnd,
-      })
-      .select("ARRAY_AGG(DISTINCT s.date::text)", "dates")
-      .getRawOne<{ dates: string[] }>();
+    try {
+      const raw = await this.sessionRepository
+        .createQueryBuilder("s")
+        .innerJoin("s.exercise", "e")
+        .where("s.userId = :userId", { userId })
+        .andWhere("s.date >= :dateStart AND s.date <= :dateEnd", {
+          dateStart,
+          dateEnd,
+        })
+        .select("s.date", "date")
+        .addSelect("e.muscleGroup", "muscleGroup")
+        .addSelect("COUNT(e.muscleGroup)::int", "count")
+        .groupBy("s.date")
+        .addGroupBy("e.muscleGroup")
+        .getRawMany<{
+          date: string;
+          muscleGroup: string;
+          count: number;
+        }>();
+
+      if (!raw?.length) {
+        return [];
+      }
+
+      return raw.reduce((acc: Record<string, [string, number][]>, curr) => {
+        const date = dayjs(curr.date).format(DATE_FORMAT);
+        const { muscleGroup, count } = curr;
+
+        if (acc?.[date]) {
+          return {
+            ...acc,
+            [date]: [...acc[date], [muscleGroup, count]],
+          };
+        }
+
+        return {
+          ...acc,
+          [date]: [[muscleGroup, count]],
+        };
+      }, {});
+    } catch (e) {
+      console.log(e);
+    }
   }
 }

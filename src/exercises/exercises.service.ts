@@ -30,6 +30,7 @@ export class ExercisesService {
         name: createExerciseDto.name,
         muscleGroup: createExerciseDto.muscleGroup,
         muscleType: createExerciseDto.muscleType,
+        comment: createExerciseDto.comment,
         userId,
       });
 
@@ -59,11 +60,14 @@ export class ExercisesService {
     exerciseId: string,
     updateExerciseDto: UpdateExerciseDto,
   ) {
+    // TODO: проблема! если мы удалили с фронта подход, то в таблице он все равно останется
+    // TODO: так как его здесь просто не обрабатываем
     const updatedExercise = await this.exercisesRepository.update(
       { id: exerciseId, userId },
       {
         name: updateExerciseDto.name,
         muscleType: updateExerciseDto.muscleType,
+        comment: updateExerciseDto.comment,
       },
     );
 
@@ -84,6 +88,25 @@ export class ExercisesService {
 
   async getExercises(userId: string) {
     return await this.exercisesRepository.findBy({ userId });
+  }
+
+  async getMuscleGroups(userId: string) {
+    try {
+      const raw = await this.exercisesRepository
+        .createQueryBuilder("e")
+        .where("e.userId = :userId", { userId })
+        .select("e.muscleGroup", "muscleGroup")
+        .groupBy("e.muscleGroup")
+        .getRawMany<Exercise>();
+
+      if (!raw?.length) {
+        return [];
+      }
+
+      return raw.map((exercise) => exercise.muscleGroup);
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   async getExercisesByMuscleGroup(userId: string, muscleGroup: string) {
@@ -126,14 +149,16 @@ export class ExercisesService {
     const setsByExercises =
       await this.setsService.combineSets(sessionByExercises);
 
-    return exercises.map((exercise) => ({
+    return exercises.map(({ userId, ...exercise }) => ({
       ...exercise,
       isDone: todaySessionByExercises[exercise.id] || false,
+      sessionId: setsByExercises[exercise.id]?.[0]?.sessionId || null,
       sets: setsByExercises[exercise.id]?.map((set) => ({
         id: set.id,
         order: set.order,
         reps: set.reps,
         weight: set.weight,
+        sessionId: set.sessionId,
       })),
     }));
   }

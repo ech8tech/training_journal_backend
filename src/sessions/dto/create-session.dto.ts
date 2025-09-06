@@ -1,9 +1,9 @@
-import { CreateSetDto } from "@sets/dto/create-set.dto";
+import { SaveSetDto } from "@sets/dto/save-set.dto";
 
 export class CreateSessionDto {
   date: string;
   exerciseId: string;
-  sets?: CreateSetDto[];
+  sets?: SaveSetDto[];
 }
 
 export class DeleteSessionDto {

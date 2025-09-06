@@ -1,10 +1,9 @@
+import { SaveSetDto } from "src/sets/dto/save-set.dto";
 import { In, IsNull, Repository } from "typeorm";
 
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { SetEntity } from "@sets/entities/set.entity";
-
-import { CreateSetDto } from "./dto/create-set.dto";
 
 @Injectable()
 export class SetsService {
@@ -13,8 +12,8 @@ export class SetsService {
     private readonly setsRepository: Repository<SetEntity>,
   ) {}
 
-  async saveSets(createSetDto: CreateSetDto[]) {
-    return await this.setsRepository.save(createSetDto);
+  async saveSets(saveSetDto: SaveSetDto[]) {
+    return await this.setsRepository.save(saveSetDto);
   }
 
   async getSets(userId: string, exerciseId: string, sessionId?: string) {

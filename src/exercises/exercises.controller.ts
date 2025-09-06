@@ -21,8 +21,14 @@ export class ExercisesController {
 
   @Get("all")
   @UseGuards(JwtAuthGuard)
-  getMuscleGroups(@CurrentUser() user: User) {
+  getExercises(@CurrentUser() user: User) {
     return this.exercisesService.getExercises(user.id);
+  }
+
+  @Get("muscle_groups")
+  @UseGuards(JwtAuthGuard)
+  getMuscleGroups(@CurrentUser() user: User) {
+    return this.exercisesService.getMuscleGroups(user.id);
   }
 
   @Get("muscle_group/:muscleGroup")
