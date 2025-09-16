@@ -1,8 +1,9 @@
-import { CreateSetDto } from "@sets/dto/create-set.dto";
+import { SaveSetDto } from "@sets/dto/save-set.dto";
 
 export class UpdateExerciseDto {
-  readonly isDone?: boolean;
   readonly muscleType: string;
   readonly name: string;
-  readonly sets?: CreateSetDto[];
+  readonly comment?: string;
+  readonly sets?: SaveSetDto[];
+  readonly sessionId: string;
 }

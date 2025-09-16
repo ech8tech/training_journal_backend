@@ -10,6 +10,11 @@ import { ProfilesService } from "./profiles.service";
 export class ProfilesController {
   constructor(private readonly profileService: ProfilesService) {}
 
+  @Get("all")
+  async getUserProfiles() {
+    return await this.profileService.getProfiles();
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   async getUserProfile(@CurrentUser() user: User) {

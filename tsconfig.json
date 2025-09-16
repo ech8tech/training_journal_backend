@@ -27,6 +27,7 @@
       "@sessions/*": ["src/sessions/*"],
       "@sets/*": ["src/sets/*"],
       "@auth/*": ["src/auth/*"],
+      "@consts/*": ["src/consts/*"]
     }
   }
 }

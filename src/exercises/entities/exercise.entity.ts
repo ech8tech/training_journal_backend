@@ -25,6 +25,9 @@ export class Exercise {
   @Column({ nullable: true, length: 255 })
   muscleType: string;
 
+  @Column({ nullable: true, length: 255 })
+  comment: string;
+
   @Column({ nullable: true })
   userId: string;
 

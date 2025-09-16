@@ -17,6 +17,10 @@ export class ProfilesService {
     private readonly profilesRepository: Repository<Profile>,
   ) {}
 
+  async getProfiles() {
+    return await this.profilesRepository.find();
+  }
+
   async getProfile(userId: string) {
     return await this.profilesRepository.findOneBy({ userId });
   }
