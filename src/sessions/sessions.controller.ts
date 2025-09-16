@@ -4,6 +4,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
   UseGuards,
@@ -16,6 +17,12 @@ import { SessionsService } from "./sessions.service";
 @Controller("session")
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
+
+  // TODO: для тестирования
+  @Get("all")
+  async getAll() {
+    return await this.sessionsService.getAll();
+  }
 
   @Post("create")
   @UseGuards(JwtAuthGuard)

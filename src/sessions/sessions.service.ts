@@ -20,6 +20,11 @@ export class SessionsService {
     private readonly setsService: SetsService,
   ) {}
 
+  // TODO: для тестирования
+  async getAll() {
+    return await this.sessionRepository.find();
+  }
+
   async getSession(userId: string, exerciseId: string, date?: string) {
     return await this.sessionRepository.findOneBy({ userId, exerciseId, date });
   }

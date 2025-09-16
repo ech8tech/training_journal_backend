@@ -1,4 +1,6 @@
 .env
+.development.env
+.production.env
 .idea
 node_modules
 build

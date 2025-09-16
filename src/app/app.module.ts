@@ -17,13 +17,17 @@ import { AppService } from "./app.service";
 @Module({
   providers: [AppService],
   imports: [
+    ConfigModule.forRoot({
+      envFilePath: [".env"],
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot({
       type: "postgres",
-      host: "localhost",
-      port: 5432,
-      username: "postgres",
-      password: "postgres",
-      database: "training_journal",
+      host: process.env.POSTGRES_HOST,
+      port: Number(process.env.POSTGRES_PORT),
+      username: process.env.POSTGRES_USER,
+      password: process.env.POSTGRES_PASSWORD,
+      database: process.env.POSTGRES_DB,
       synchronize: true,
       autoLoadEntities: true,
       // dropSchema: true,
@@ -31,9 +35,6 @@ import { AppService } from "./app.service";
     CacheModule.register({
       isGlobal: true,
       ttl: 0,
-    }),
-    ConfigModule.forRoot({
-      isGlobal: true,
     }),
     AuthModule,
     UsersModule,
