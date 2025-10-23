@@ -30,7 +30,7 @@ export class ExercisesService {
         name: createExerciseDto.name,
         muscleGroup: createExerciseDto.muscleGroup,
         muscleType: createExerciseDto.muscleType,
-        comment: createExerciseDto.comment,
+        comment: createExerciseDto.comment || null,
         userId,
       });
 
@@ -61,13 +61,13 @@ export class ExercisesService {
     updateExerciseDto: UpdateExerciseDto,
   ) {
     // TODO: проблема! если мы удалили с фронта подход, то в таблице он все равно останется
-    // TODO: так как его здесь просто не обрабатываем
+    // TODO: так как удаленный подход здесь просто не обрабатываем
     const updatedExercise = await this.exercisesRepository.update(
       { id: exerciseId, userId },
       {
         name: updateExerciseDto.name,
         muscleType: updateExerciseDto.muscleType,
-        comment: updateExerciseDto.comment,
+        comment: updateExerciseDto.comment || null,
       },
     );
 

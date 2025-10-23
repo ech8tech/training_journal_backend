@@ -151,7 +151,6 @@ pipeline {
                                         USER="${VPS_USER}"
                                         IMAGE_FILE="${BACKEND_IMAGE}-${DOCKER_TAG}.tar.gz"
                                         DOCKER_PROD_FILE="docker-compose.prod.yml"
-                                        PERMISSION_FILE="./db/init/00-permission.sh"
 
                                         echo -e "${BLUE}🚀 Starting deployment process...${RESET}"
                                         echo -e "${BLUE}🎯 Target: ${USER}@${HOST} ${RESET}"
@@ -175,7 +174,6 @@ pipeline {
 
                                         scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$DOTENV_FILE" "$USER@$HOST:${REMOTE_APP}/.env"
                                         scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$DB_DUMP_FILE" "$USER@$HOST:${REMOTE_APP}/${REMOTE_DB}/dump.sql"
-                                        scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$PERMISSION_FILE" "$USER@$HOST:${REMOTE_APP}/${REMOTE_DB}"
 
                                         echo -e "${BLUE}🗄️ Copying image file...${RESET}"
                                         scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 "./$IMAGE_FILE" "$USER@$HOST:${REMOTE_IMAGES}/"
@@ -199,6 +197,7 @@ pipeline {
                                                 DOCKER_TAG=${DOCKER_TAG} docker compose -f docker-compose.prod.yml down --volumes --remove-orphans
                                             fi
 
+                                            chmod 644 ${REMOTE_APP}/${REMOTE_DB}/dump.sql
                                             echo -e "${BLUE}✈️ Starting services with DOCKER_TAG=${DOCKER_TAG}...${RESET}"
                                             DOCKER_TAG=${DOCKER_TAG} docker compose -f docker-compose.prod.yml up -d
 
