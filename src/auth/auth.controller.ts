@@ -61,6 +61,10 @@ export class AuthController {
     @CurrentUser() user: User,
     @Res({ passthrough: true }) response: Response,
   ) {
+    console.log(
+      "in GET",
+      this.configService.getOrThrow("REDIRECT_TO_DASHBOARD"),
+    );
     const signedInUser = await this.authService.login(user, response);
 
     if (signedInUser.hasProfile) {

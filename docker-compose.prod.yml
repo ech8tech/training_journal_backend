@@ -1,18 +1,13 @@
-version: "3.8"
-
 networks:
   app_net:
     external: true
 
 services:
   backend:
-    build:
-      context: .
-      target: production
+    image: backend:${DOCKER_TAG:-prod}
     container_name: backend
     env_file: .env
     expose: ["9001"]
-#    ports: ["9001:9001"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -27,7 +22,7 @@ services:
       PGDATA: /var/lib/postgresql/data
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - ./db/init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL","pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
