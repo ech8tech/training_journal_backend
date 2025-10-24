@@ -56,6 +56,16 @@ pipeline {
             defaultValue: false,
             description: 'Инициализировать новый sql файл'
         )
+        booleanParam(
+            name: 'RUN_MIGRATIONS',
+            defaultValue: false,
+            description: 'Запустить миграции'
+        )
+        booleanParam(
+            name: 'REVERT_LAST_MIGRATION',
+            defaultValue: false,
+            description: 'Отменить последнюю миграцию'
+        )
     }
 
     stages {
@@ -68,31 +78,6 @@ pipeline {
                 }
             }
         }
-
-        //stage('Prepare files') {
-        //    steps {
-        //        script {
-        //            // Используем Config File Provider для несекретного .sql файла
-        //            configFileProvider([
-        //                configFile(fileId: 'backend-sql-file', variable: 'DB_DUMP_FILE')
-        //            ]) {
-        //                sh """#!/usr/bin/env bash
-        //                    set -Eeuo pipefail
-        //
-        //                    mkdir -p ${CONTEXT}/${REMOTE_DB}
-        //                    cp $DB_DUMP_FILE ${CONTEXT}/${REMOTE_DB}/dump.sql
-        //                """
-        //            }
-        //
-        //            // Используем Credentials для секретного .env файла
-        //            withCredentials([
-        //                file(credentialsId: 'backend-secret-file', variable: 'DOTENV_FILE')
-        //            ]) {
-        //                sh "cp $DOTENV_FILE ./.env"
-        //            }
-        //        }
-        //    }
-        //}
 
         stage('Build & Package') {
             steps {
@@ -142,7 +127,11 @@ pipeline {
                             withCredentials([
                                 file(credentialsId: 'backend-secret-file', variable: 'DOTENV_FILE')
                             ]) {
-                                withEnv(["IS_INIT_DUMP=${params.INIT_DUMP ?: 'false'}"]) {
+                                withEnv([
+                                    "IS_INIT_DUMP=${params.INIT_DUMP ?: 'false'}",
+                                    "IS_RUN_MIGRATIONS=${params.RUN_MIGRATIONS ?: 'false'}",
+                                    "IS_REVERT_LAST_MIGRATION=${params.REVERT_LAST_MIGRATION ?: 'false'}"
+                                ]) {
                                     sh '''#!/usr/bin/env bash
                                         set -Eeuo pipefail
 
@@ -164,22 +153,25 @@ pipeline {
                                         echo -e "${BLUE}🗄️ Fixing permissions for files...${RESET}"
                                         # Изменяем права на удаленном сервере, если файлы уже существуют
                                         ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$USER@$HOST" "
-                                            if [ -f ${REMOTE_APP}/.env ]; then
-                                                chmod u+w ${REMOTE_APP}/.env
+                                            if [ -f ${REMOTE_APP}/.env.production ]; then
+                                                chmod u+w ${REMOTE_APP}/.env.production
                                             fi
                                             if [ -f ${REMOTE_APP}/${REMOTE_DB}/dump.sql ]; then
                                                 chmod u+w ${REMOTE_APP}/${REMOTE_DB}/dump.sql
                                             fi
                                         "
 
-                                        scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$DOTENV_FILE" "$USER@$HOST:${REMOTE_APP}/.env"
-                                        scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$DB_DUMP_FILE" "$USER@$HOST:${REMOTE_APP}/${REMOTE_DB}/dump.sql"
+                                        scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$DOTENV_FILE" "$USER@$HOST:${REMOTE_APP}/.env.production"
+                                        # scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$DB_DUMP_FILE" "$USER@$HOST:${REMOTE_APP}/${REMOTE_DB}/dump.sql"
 
                                         echo -e "${BLUE}🗄️ Copying image file...${RESET}"
                                         scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 "./$IMAGE_FILE" "$USER@$HOST:${REMOTE_IMAGES}/"
 
                                         echo -e "${BLUE}🗄️ Copying deployment files...${RESET}"
                                         scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 "./$DOCKER_PROD_FILE" "$USER@$HOST:${REMOTE_APP}/"
+
+                                        echo -e "${BLUE}🗄️ Copying sql dump file...${RESET}"
+                                        scp -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$DB_DUMP_FILE" "$USER@$HOST:${REMOTE_APP}/${REMOTE_DB}/dump.sql"
 
                                         # Deploy
                                         ssh -o StrictHostKeyChecking=no "$USER@$HOST" "bash -lc '
@@ -193,13 +185,27 @@ pipeline {
                                             DOCKER_TAG=${DOCKER_TAG} docker compose -f docker-compose.prod.yml down || true
 
                                             if [ "${IS_INIT_DUMP}" == "true" ]; then
+                                                chmod 644 ${REMOTE_APP}/${REMOTE_DB}/dump.sql
                                                 echo -e "${BLUE}🗑️ Removing old volumes for fresh database initialization...${RESET}"
                                                 DOCKER_TAG=${DOCKER_TAG} docker compose -f docker-compose.prod.yml down --volumes --remove-orphans
                                             fi
 
-                                            chmod 644 ${REMOTE_APP}/${REMOTE_DB}/dump.sql
                                             echo -e "${BLUE}✈️ Starting services with DOCKER_TAG=${DOCKER_TAG}...${RESET}"
                                             DOCKER_TAG=${DOCKER_TAG} docker compose -f docker-compose.prod.yml up -d
+
+                                            if [ "${IS_RUN_MIGRATIONS}" == "true" ]; then
+                                                echo -e "${BLUE}⚙️Run migrations...${RESET}"
+                                                docker exec ${BACKEND_IMAGE} npm run migration:run
+                                                echo -e "${GREEN}✅Migrations successed!${RESET}"
+                                                docker exec ${BACKEND_IMAGE} npm run migration:show
+                                            fi
+
+                                            if [ "${IS_REVERT_LAST_MIGRATION}" == "true" ]; then
+                                                echo -e "${BLUE}⚙️Revert last migration...${RESET}"
+                                                docker exec ${BACKEND_IMAGE} npm run migration:revert
+                                                echo -e "${GREEN}✅Revert last migration successed!${RESET}"
+                                                docker exec ${BACKEND_IMAGE} npm run migration:show
+                                            fi
 
                                             echo -e "${BLUE}✅ Verifying deployment...${RESET}"
                                             sleep 10

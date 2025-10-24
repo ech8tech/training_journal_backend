@@ -7,7 +7,7 @@ import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 
 async function bootstrap() {
-  const PORT = process.env.PORT ?? 9001;
+  const PORT = process.env.PORT ?? 3001;
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalPipes(new ValidationPipe());
@@ -22,9 +22,7 @@ async function bootstrap() {
   //   optionsSuccessStatus: 204, // статус ответа для preflight запроса
   // });
 
-  console.log("in main", process.env);
-
-  await app.listen(process.env.PORT ?? 9001, "0.0.0.0", () =>
+  await app.listen(process.env.PORT ?? 3001, "0.0.0.0", () =>
     console.log(`Server started on port = ${PORT}`),
   );
 }

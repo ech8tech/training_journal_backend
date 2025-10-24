@@ -1,6 +1,10 @@
 import { Response } from "express";
 
-import { JwtRefreshAuthGuard, LocalAuthGuard } from "@auth/guards";
+import {
+  JwtAuthGuard,
+  JwtRefreshAuthGuard,
+  LocalAuthGuard,
+} from "@auth/guards";
 import { GoogleAuthGuard } from "@auth/guards/google-auth.guard";
 import { Body, Controller, Get, Post, Res, UseGuards } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -41,6 +45,12 @@ export class AuthController {
     return { id: signedInUser.id, hasProfile: signedInUser.hasProfile };
   }
 
+  @Get("check_is_logged")
+  @UseGuards(JwtAuthGuard)
+  async checkIsLogged(@CurrentUser() user: User) {
+    return Promise.resolve(true);
+  }
+
   @Post("refresh")
   @UseGuards(JwtRefreshAuthGuard)
   async refreshToken(
@@ -61,10 +71,6 @@ export class AuthController {
     @CurrentUser() user: User,
     @Res({ passthrough: true }) response: Response,
   ) {
-    console.log(
-      "in GET",
-      this.configService.getOrThrow("REDIRECT_TO_DASHBOARD"),
-    );
     const signedInUser = await this.authService.login(user, response);
 
     if (signedInUser.hasProfile) {

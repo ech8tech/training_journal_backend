@@ -52,13 +52,14 @@ export class AuthService {
       secret: this.configService.getOrThrow("JWT_ACCESS_TOKEN_SECRET"),
       expiresIn: `${this.configService.getOrThrow("JWT_ACCESS_TOKEN_EXPIRATION_MS")}ms`,
     });
+
     const refreshToken = this.jwtService.sign(tokenPayload, {
       secret: this.configService.getOrThrow("JWT_REFRESH_TOKEN_SECRET"),
       expiresIn: `${this.configService.getOrThrow("JWT_REFRESH_TOKEN_EXPIRATION_MS")}ms`,
     });
 
     response.cookie("Authentication", accessToken, {
-      // httpOnly: true,
+      httpOnly: true,
       secure: this.configService.get("NODE_ENV") === "production",
       expires: expiresAccessToken,
     });
@@ -88,7 +89,7 @@ export class AuthService {
     const authenticated = await compare(password, user.password);
 
     if (!authenticated) {
-      return new BadRequestException("Неверный логин или пароль");
+      return new UnauthorizedException("Неверный логин или пароль");
     }
 
     return user;
@@ -100,7 +101,7 @@ export class AuthService {
     const authenticated = await compare(refreshToken, user.refreshToken);
 
     if (!authenticated) {
-      return new UnauthorizedException("Ошибка авторизации");
+      return new BadRequestException("Ошибка обновления токена");
     }
 
     return user;

@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-EXPOSE 9001
+EXPOSE 3001
 CMD ["npm","run","start:dev"]
 
 # ---------- Build (TS -> dist) ----------
@@ -34,6 +34,6 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package*.json ./
 
-EXPOSE 9001
+EXPOSE 3001
 CMD ["npm","run","start:prod"]
 
