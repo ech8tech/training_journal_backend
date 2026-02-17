@@ -20,7 +20,7 @@ pipeline {
 
     environment {
         NODE_VERSION   = "20"
-        VPS_HOST       = "167.17.180.14"
+        VPS_HOST       = "31.192.106.220"
         VPS_USER       = "qtoxic"
 
         BACKEND_IMAGE = "backend"
