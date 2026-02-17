@@ -3,6 +3,7 @@ import { JwtAuthGuard } from "@auth/guards";
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -66,9 +67,9 @@ export class ExercisesController {
     );
   }
 
-  // @Delete("delete/:exerciseId")
-  // @UseGuards(JwtAuthGuard)
-  // delete(@CurrentUser() user: User, @Param("exerciseId") exerciseId: string) {
-  //   return this.exercisesService.deleteExercise(user.id, exerciseId);
-  // }
+  @Delete("delete/:exerciseId")
+  @UseGuards(JwtAuthGuard)
+  delete(@CurrentUser() user: User, @Param("exerciseId") exerciseId: string) {
+    return this.exercisesService.deleteExercise(user.id, exerciseId);
+  }
 }

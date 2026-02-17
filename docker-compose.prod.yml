@@ -1,18 +1,13 @@
-version: "3.8"
-
 networks:
   app_net:
     external: true
 
 services:
   backend:
-    build:
-      context: .
-      target: production
+    image: backend:${DOCKER_TAG:-prod}
     container_name: backend
-    env_file: .env
-    expose: ["9001"]
-#    ports: ["9001:9001"]
+    env_file: .env.production
+    expose: ["3001"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -22,7 +17,7 @@ services:
   postgres:
     image: postgres:17
     container_name: postgres
-    env_file: .env
+    env_file: .env.production
     environment:
       PGDATA: /var/lib/postgresql/data
     volumes:

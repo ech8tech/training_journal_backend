@@ -4,14 +4,14 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-EXPOSE 9001
+EXPOSE 3001
 CMD ["npm","run","start:dev"]
 
 # ---------- Build (TS -> dist) ----------
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 
@@ -19,7 +19,7 @@ RUN npm run build
 FROM node:20-alpine AS prod-deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --no-audit --no-fund
 
 # ---------- Runtime (Production) ----------
 FROM node:20-alpine AS production
@@ -34,6 +34,6 @@ COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package*.json ./
 
-EXPOSE 9001
+EXPOSE 3001
 CMD ["npm","run","start:prod"]
 

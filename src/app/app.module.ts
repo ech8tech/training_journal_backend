@@ -18,7 +18,7 @@ import { AppService } from "./app.service";
   providers: [AppService],
   imports: [
     ConfigModule.forRoot({
-      envFilePath: [".env"],
+      envFilePath: [`.env.${process.env.NODE_ENV}`],
       isGlobal: true,
     }),
     TypeOrmModule.forRoot({
@@ -28,7 +28,7 @@ import { AppService } from "./app.service";
       username: process.env.POSTGRES_USER,
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
-      synchronize: true,
+      synchronize: false,
       autoLoadEntities: true,
       // dropSchema: true,
     }),

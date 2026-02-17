@@ -22,13 +22,13 @@ export class Exercise {
   @Column({ length: 255 })
   muscleGroup: string;
 
-  @Column({ nullable: true, length: 255 })
+  @Column({ length: 255 })
   muscleType: string;
 
-  @Column({ nullable: true, length: 255 })
-  comment: string;
+  @Column({ type: "text", nullable: true })
+  comment: string | null;
 
-  @Column({ nullable: true })
+  @Column()
   userId: string;
 
   @ManyToOne(() => User, (user) => user.exercises, {

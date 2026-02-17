@@ -1,6 +1,10 @@
 import { Response } from "express";
 
-import { JwtRefreshAuthGuard, LocalAuthGuard } from "@auth/guards";
+import {
+  JwtAuthGuard,
+  JwtRefreshAuthGuard,
+  LocalAuthGuard,
+} from "@auth/guards";
 import { GoogleAuthGuard } from "@auth/guards/google-auth.guard";
 import { Body, Controller, Get, Post, Res, UseGuards } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -39,6 +43,12 @@ export class AuthController {
   ) {
     const signedInUser = await this.authService.login(user, response);
     return { id: signedInUser.id, hasProfile: signedInUser.hasProfile };
+  }
+
+  @Get("check_is_logged")
+  @UseGuards(JwtAuthGuard)
+  async checkIsLogged(@CurrentUser() user: User) {
+    return Promise.resolve(true);
   }
 
   @Post("refresh")
