@@ -237,7 +237,11 @@ pipeline {
 
                     info("🧹 Clean up local...")
                     sh '''
-                        docker images --format "{{.Repository}}:{{.Tag}}" | grep "backend:" | grep -v $IMAGE_NAME | xargs -r docker rmi
+                        IMAGE_NAME="${BACKEND_IMAGE}:${DOCKER_TAG}"
+                        docker images --format "{{.Repository}}:{{.Tag}}" \
+                            | grep "^${BACKEND_IMAGE}:" \
+                            | grep -v "$IMAGE_NAME" \
+                            | xargs -r docker rmi
                     '''
 
 
