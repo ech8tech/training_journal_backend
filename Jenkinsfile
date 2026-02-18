@@ -145,9 +145,6 @@ pipeline {
                                         echo -e "${BLUE}🎯 Target: ${USER}@${HOST} ${RESET}"
                                         echo -e "${BLUE}🎞️ Image: ${IMAGE_FILE} ${RESET}"
 
-                                        echo "LOCAL:"; whoami; pwd; id
-                                        echo "REMOTE:"; ssh -o StrictHostKeyChecking=no qtoxic@31.192.106.220 'whoami; pwd; id'
-
                                         echo -e "${BLUE}🗄️ Prepared remote directories and files...${RESET}"
                                         ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 "$USER@$HOST" "
                                             mkdir -p ${REMOTE_IMAGES} ${REMOTE_APP} ${REMOTE_APP}/${REMOTE_DB}
